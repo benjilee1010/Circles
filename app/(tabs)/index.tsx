@@ -42,8 +42,7 @@ export default function PeopleScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <PageContainer>
-      {/* Header */}
+      {/* Header — full width, always top-left */}
       <View style={styles.header}>
         <Text style={styles.title}>Crcls</Text>
         <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/contact/add')}>
@@ -51,6 +50,7 @@ export default function PeopleScreen() {
         </TouchableOpacity>
       </View>
 
+      <PageContainer>
       {/* Category filter bar */}
       {contacts.length > 0 && (
         <ScrollView
