@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Alert, SafeAreaView, ActivityIndicator, Switch,
+  View, Text, StyleSheet, TouchableOpacity, Alert, SafeAreaView, ActivityIndicator, Switch, Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -17,16 +17,24 @@ export default function SettingsScreen() {
   const [loading, setLoading] = useState(false);
 
   async function handleSignOut() {
-    Alert.alert('Sign out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign out', style: 'destructive', onPress: async () => {
-          setLoading(true);
-          await supabase.auth.signOut();
-          setLoading(false);
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Are you sure you want to sign out?');
+      if (!confirmed) return;
+      setLoading(true);
+      await supabase.auth.signOut();
+      setLoading(false);
+    } else {
+      Alert.alert('Sign out', 'Are you sure you want to sign out?', [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign out', style: 'destructive', onPress: async () => {
+            setLoading(true);
+            await supabase.auth.signOut();
+            setLoading(false);
+          },
         },
-      },
-    ]);
+      ]);
+    }
   }
 
   return (
