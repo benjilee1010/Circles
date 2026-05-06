@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-expo-app@latest . --template blank-typescript)",
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)",
+      "PowerShell($env:PATH -split ';' | ForEach-Object { $_ } | Where-Object { $_ -ne '' } | Select-Object -First 30)",
+      "PowerShell($nodePath = \"C:\\\\Users\\\\ntxhy\\\\AppData\\\\Local\\\\claude-cli-nodejs\"; Get-ChildItem $nodePath | Select-Object Name, Mode; & \"$nodePath\\\\node.exe\" --version 2>&1)",
+      "PowerShell($env:PATH = [System.Environment]::GetEnvironmentVariable\\(\"PATH\", \"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"PATH\", \"User\"\\); node --version; npm --version)",
+      "PowerShell($env:PATH = [System.Environment]::GetEnvironmentVariable\\(\"PATH\", \"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"PATH\", \"User\"\\); Set-Location -LiteralPath \"C:\\\\Users\\\\ntxhy\\\\OneDrive\\\\Documents\\\\summer projects 26\\\\circles\"; npx expo install expo-image-picker 2>&1)"
+    ]
+  }
+}
