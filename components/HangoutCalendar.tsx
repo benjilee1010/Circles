@@ -182,7 +182,7 @@ function makeStyles(colors: ColorScheme) {
     dayCellLogged: { backgroundColor: colors.text },
     dayCellToday: { borderWidth: 1.5, borderColor: colors.text, backgroundColor: colors.surfaceAlt },
     dayNum: { fontSize: 15, fontWeight: '500', color: colors.text },
-    dayNumLogged: { color: '#fff', fontWeight: '700' },
+    dayNumLogged: { color: colors.background, fontWeight: '700' },
     dayNumFuture: { color: colors.textTertiary },
 
     historyScroll: { paddingHorizontal: 16, paddingBottom: 32 },
