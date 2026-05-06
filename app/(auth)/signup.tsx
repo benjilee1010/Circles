@@ -34,7 +34,7 @@ export default function SignupScreen() {
     >
       <View style={styles.inner}>
         <View style={styles.header}>
-          <Text style={styles.wordmark}>Circles</Text>
+          <Text style={styles.wordmark}>Crcls</Text>
           <Text style={styles.tagline}>Create your account</Text>
         </View>
 

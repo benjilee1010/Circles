@@ -50,7 +50,7 @@ export default function SettingsScreen() {
       </View>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>Circles · Stay close to the people who matter.</Text>
+        <Text style={styles.footerText}>Crcls · Stay close to the people who matter.</Text>
       </View>
       </PageContainer>
     </SafeAreaView>

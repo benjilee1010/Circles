@@ -27,7 +27,7 @@ export default function LoginScreen() {
     >
       <View style={styles.inner}>
         <View style={styles.header}>
-          <Text style={styles.wordmark}>Circles</Text>
+          <Text style={styles.wordmark}>Crcls</Text>
           <Text style={styles.tagline}>Stay close to the people who matter.</Text>
         </View>
 

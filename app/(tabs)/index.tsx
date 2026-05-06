@@ -42,7 +42,7 @@ export default function PeopleScreen() {
       <PageContainer>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Circles</Text>
+        <Text style={styles.title}>Crcls</Text>
         <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/contact/add')}>
           <Text style={styles.addBtnText}>+</Text>
         </TouchableOpacity>

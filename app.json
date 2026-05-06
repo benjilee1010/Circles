@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Circles",
+    "name": "Crcls",
     "slug": "circles",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -43,7 +43,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Circles to access your photos to set contact profile pictures."
+          "photosPermission": "Allow Crcls to access your photos to set contact profile pictures."
         }
       ]
     ],
