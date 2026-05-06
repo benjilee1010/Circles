@@ -19,7 +19,12 @@ export default function SignupScreen() {
   async function handleSignup() {
     if (!email || !password) return;
     setLoading(true);
-    const { error } = await supabase.auth.signUp({ email: email.trim(), password });
+    const redirectTo = Platform.OS === 'web' ? window.location.origin : undefined;
+    const { error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: { emailRedirectTo: redirectTo },
+    });
     setLoading(false);
     if (error) {
       Alert.alert('Sign up failed', error.message);
