@@ -121,6 +121,11 @@ export default function EditContactScreen() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={styles.backRow}>
+        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} style={styles.backBtn}>
+          <Text style={styles.backText}>‹ Back</Text>
+        </TouchableOpacity>
+      </View>
       <PageContainer>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.form}>
@@ -217,6 +222,9 @@ export default function EditContactScreen() {
 
 function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
+    backRow: { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: colors.background },
+    backBtn: { alignSelf: 'flex-start', padding: 4 },
+    backText: { fontSize: 17, color: colors.text, fontWeight: '400' },
     container: { padding: 20, gap: 24 },
     form: { gap: 16 },
     avatarRow: { alignItems: 'center', gap: 8, paddingVertical: 4 },

@@ -49,14 +49,7 @@ function RootLayoutNav() {
       />
       <Stack.Screen
         name="contact/edit"
-        options={{
-          presentation: 'modal',
-          headerShown: true,
-          headerTintColor: colors.text,
-          headerStyle: { backgroundColor: colors.background },
-          headerShadowVisible: false,
-          title: 'Edit',
-        }}
+        options={{ presentation: 'modal', headerShown: false }}
       />
       <Stack.Screen
         name="settings/change-password"
