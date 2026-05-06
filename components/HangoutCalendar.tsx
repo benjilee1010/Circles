@@ -104,6 +104,16 @@ export function HangoutCalendar({ loggedDates, onDayPress, contactName, lastCont
       <ScrollView contentContainerStyle={styles.historyScroll} showsVerticalScrollIndicator={false}>
         <Text style={styles.historyLabel}>Past weeks</Text>
 
+        {/* Day-of-week column headers — shown once */}
+        <View style={styles.historyRow}>
+          <View style={{ width: 46 }} />
+          <View style={styles.historyDots}>
+            {DAY_LABELS.map((d, i) => (
+              <Text key={i} style={styles.historyDayHeader}>{d}</Text>
+            ))}
+          </View>
+        </View>
+
         {Array.from({ length: NUM_WEEKS }, (_, wi) => {
           const wStart = addWeeks(startOfWeek(today, { weekStartsOn: 0 }), -(wi + 1));
           const days = Array.from({ length: 7 }, (_, di) => addDays(wStart, di));
@@ -117,7 +127,11 @@ export function HangoutCalendar({ loggedDates, onDayPress, contactName, lastCont
                   const logged = loggedDates.has(ds);
                   return (
                     <TouchableOpacity key={di} style={styles.dotWrap} onPress={() => onDayPress(ds)}>
-                      <View style={[styles.dot, logged && styles.dotLogged]} />
+                      <View style={[styles.dot, logged && styles.dotLogged]}>
+                        <Text style={[styles.dotNum, logged && styles.dotNumLogged]}>
+                          {format(d, 'd')}
+                        </Text>
+                      </View>
                     </TouchableOpacity>
                   );
                 })}
@@ -181,12 +195,19 @@ function makeStyles(colors: ColorScheme) {
     },
     historyWeek: { fontSize: 11, color: colors.textSecondary, width: 46 },
     // flex: 1 + each dotWrap flex: 1 → dots spread edge-to-edge
+    historyDayHeader: {
+      flex: 1, textAlign: 'center', fontSize: 10,
+      fontWeight: '600', color: colors.textTertiary,
+    },
     historyDots: { flex: 1, flexDirection: 'row' },
     dotWrap: { flex: 1, alignItems: 'center', paddingVertical: 3 },
     dot: {
       width: '80%' as any, aspectRatio: 1, borderRadius: 5,
       backgroundColor: colors.surfaceAlt,
+      alignItems: 'center', justifyContent: 'center',
     },
     dotLogged: { backgroundColor: colors.text },
+    dotNum: { fontSize: 9, fontWeight: '500', color: colors.textSecondary },
+    dotNumLogged: { color: colors.background, fontWeight: '700' },
   });
 }

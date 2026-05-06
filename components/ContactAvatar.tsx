@@ -128,7 +128,7 @@ function makeStyles(colors: ColorScheme) {
     wrap: { position: 'relative' },
     image: { resizeMode: 'cover' },
     initials: { alignItems: 'center', justifyContent: 'center' },
-    initialsText: { fontWeight: '700', color: colors.text },
+    initialsText: { fontWeight: '700', color: '#2C2C2E' },
     overlay: {
       ...StyleSheet.absoluteFillObject,
       backgroundColor: 'rgba(0,0,0,0.4)',

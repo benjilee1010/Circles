@@ -40,15 +40,24 @@ export default function ContactScreen() {
   async function logHangout(date: string) {
     const existing = interactions.find((i) => i.date === date);
     if (existing) {
-      Alert.alert('Remove log', `Remove the hangout on ${format(parseISO(date), 'MMM d')}?`, [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove', style: 'destructive', onPress: async () => {
-            await supabase.from('interactions').delete().eq('id', existing.id);
-            refresh();
+      if (Platform.OS === 'web') {
+        // eslint-disable-next-line no-alert
+        const confirmed = window.confirm(`Remove the hangout on ${format(parseISO(date), 'MMM d')}?`);
+        if (confirmed) {
+          await supabase.from('interactions').delete().eq('id', existing.id);
+          refresh();
+        }
+      } else {
+        Alert.alert('Remove log', `Remove the hangout on ${format(parseISO(date), 'MMM d')}?`, [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Remove', style: 'destructive', onPress: async () => {
+              await supabase.from('interactions').delete().eq('id', existing.id);
+              refresh();
+            },
           },
-        },
-      ]);
+        ]);
+      }
     } else {
       await supabase.from('interactions').insert({ contact_id: id, date });
       refresh();
