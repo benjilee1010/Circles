@@ -108,7 +108,7 @@ function makeStyles(colors: ColorScheme) {
       alignItems: 'center',
       marginTop: 4,
     },
-    buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+    buttonText: { color: colors.background, fontSize: 16, fontWeight: '600' },
     switchRow: { marginTop: 32, alignItems: 'center' },
     switchText: { fontSize: 14, color: colors.textSecondary },
     switchLink: { color: colors.text, fontWeight: '600' },
