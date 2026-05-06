@@ -51,7 +51,10 @@ export default function PeopleScreen() {
     <SafeAreaView style={styles.safe}>
       {/* Header — full width, always top-left */}
       <View style={styles.header}>
-        <Text style={styles.title}>Crcls</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>Crcls</Text>
+          <Text style={styles.version}>version 1.0  Made by Hoyeon Lee</Text>
+        </View>
         <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/contact/add')}>
           <Text style={styles.addBtnText}>+</Text>
         </TouchableOpacity>
@@ -216,7 +219,9 @@ function makeStyles(colors: ColorScheme) {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
       paddingHorizontal: 20, paddingVertical: 16,
     },
+    titleRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
     title: { fontSize: 28, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
+    version: { fontSize: 11, color: colors.textTertiary, fontWeight: '400' },
     addBtn: {
       alignItems: 'center', justifyContent: 'center',
       paddingHorizontal: 4,
