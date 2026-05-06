@@ -13,6 +13,7 @@ import { HangoutCalendar } from '@/components/HangoutCalendar';
 import { NotesTab } from '@/components/NotesTab';
 import { ContactAvatar } from '@/components/ContactAvatar';
 import { useAuth } from '@/context/AuthContext';
+import { PageContainer } from '@/components/PageContainer';
 
 type Tab = 'overview' | 'notes' | 'calendar';
 
@@ -75,6 +76,7 @@ export default function ContactScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <PageContainer>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {/* Profile header */}
         <View style={styles.profileHeader}>
@@ -172,6 +174,7 @@ export default function ContactScreen() {
           />
         )}
       </KeyboardAvoidingView>
+      </PageContainer>
     </SafeAreaView>
   );
 }

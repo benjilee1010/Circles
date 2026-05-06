@@ -5,6 +5,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { Colors } from '@/lib/colors';
+import { PageContainer } from '@/components/PageContainer';
 
 export default function SettingsScreen() {
   const { session } = useAuth();
@@ -25,6 +26,7 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <PageContainer>
       <View style={styles.header}>
         <Text style={styles.title}>Settings</Text>
       </View>
@@ -50,6 +52,7 @@ export default function SettingsScreen() {
       <View style={styles.footer}>
         <Text style={styles.footerText}>Circles · Stay close to the people who matter.</Text>
       </View>
+      </PageContainer>
     </SafeAreaView>
   );
 }

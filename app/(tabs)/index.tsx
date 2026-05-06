@@ -11,6 +11,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { ContactWithMeta } from '@/lib/types';
 import { frequencyLabel } from '@/lib/frequencies';
 import { ContactAvatar } from '@/components/ContactAvatar';
+import { PageContainer } from '@/components/PageContainer';
 
 export default function PeopleScreen() {
   const router = useRouter();
@@ -38,6 +39,7 @@ export default function PeopleScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <PageContainer>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Circles</Text>
@@ -131,6 +133,7 @@ export default function PeopleScreen() {
           ) : null
         }
       />
+      </PageContainer>
     </SafeAreaView>
   );
 }

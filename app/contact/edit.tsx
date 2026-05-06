@@ -12,6 +12,7 @@ import { CategoryPicker } from '@/components/CategoryPicker';
 import { ContactAvatar } from '@/components/ContactAvatar';
 import { useAuth } from '@/context/AuthContext';
 import { Contact, ImportantDate, ReminderFrequency } from '@/lib/types';
+import { PageContainer } from '@/components/PageContainer';
 
 export default function EditContactScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -117,6 +118,7 @@ export default function EditContactScreen() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <PageContainer>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.form}>
           {/* Avatar */}
@@ -205,6 +207,7 @@ export default function EditContactScreen() {
             : <Text style={styles.saveBtnText}>Save changes</Text>}
         </TouchableOpacity>
       </ScrollView>
+      </PageContainer>
     </KeyboardAvoidingView>
   );
 }

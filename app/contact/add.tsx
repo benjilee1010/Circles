@@ -9,6 +9,7 @@ import { Colors } from '@/lib/colors';
 import { FrequencyPicker } from '@/components/FrequencyPicker';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { ReminderFrequency } from '@/lib/types';
+import { PageContainer } from '@/components/PageContainer';
 
 export default function AddContactScreen() {
   const router = useRouter();
@@ -58,6 +59,7 @@ export default function AddContactScreen() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <PageContainer>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.form}>
           <View style={styles.field}>
@@ -101,6 +103,7 @@ export default function AddContactScreen() {
             : <Text style={styles.saveBtnText}>Add to circles</Text>}
         </TouchableOpacity>
       </ScrollView>
+      </PageContainer>
     </KeyboardAvoidingView>
   );
 }

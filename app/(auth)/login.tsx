@@ -70,11 +70,11 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  inner: { flex: 1, justifyContent: 'center', paddingHorizontal: 32 },
-  header: { marginBottom: 48, alignItems: 'center' },
+  inner: { flex: 1, justifyContent: 'center', paddingHorizontal: 32, alignItems: 'center' },
+  form: { gap: 12, width: '100%', maxWidth: 400 },
+  header: { marginBottom: 48, alignItems: 'center', width: '100%', maxWidth: 400 },
   wordmark: { fontSize: 36, fontWeight: '700', color: Colors.text, letterSpacing: -1 },
   tagline: { fontSize: 15, color: Colors.textSecondary, marginTop: 8 },
-  form: { gap: 12 },
   input: {
     backgroundColor: Colors.surface,
     borderWidth: 1,
