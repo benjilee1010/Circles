@@ -6,7 +6,8 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { format, parseISO } from 'date-fns';
 import { supabase } from '@/lib/supabase';
-import { Colors } from '@/lib/colors';
+import { useTheme } from '@/context/ThemeContext';
+import { ColorScheme } from '@/lib/colors';
 import { FrequencyPicker } from '@/components/FrequencyPicker';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { ContactAvatar } from '@/components/ContactAvatar';
@@ -18,6 +19,8 @@ export default function EditContactScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { session } = useAuth();
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
 
   const [contact, setContact] = useState<Contact | null>(null);
   const [name, setName] = useState('');
@@ -114,7 +117,7 @@ export default function EditContactScreen() {
     else router.back();
   }
 
-  if (loading) return <ActivityIndicator style={{ flex: 1 }} color={Colors.textTertiary} />;
+  if (loading) return <ActivityIndicator style={{ flex: 1 }} color={colors.textTertiary} />;
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -140,7 +143,7 @@ export default function EditContactScreen() {
             <TextInput
               style={styles.input}
               placeholder="Full name"
-              placeholderTextColor={Colors.textTertiary}
+              placeholderTextColor={colors.textTertiary}
               value={name}
               onChangeText={setName}
             />
@@ -151,7 +154,7 @@ export default function EditContactScreen() {
             <TextInput
               style={styles.input}
               placeholder="MM/DD or MM/DD/YYYY"
-              placeholderTextColor={Colors.textTertiary}
+              placeholderTextColor={colors.textTertiary}
               value={birthday}
               onChangeText={setBirthday}
               keyboardType="numbers-and-punctuation"
@@ -175,14 +178,14 @@ export default function EditContactScreen() {
                 <TextInput
                   style={[styles.input, styles.dateLabelInput]}
                   placeholder="Label"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={colors.textTertiary}
                   value={d.label}
                   onChangeText={(v) => updateDate(i, 'label', v)}
                 />
                 <TextInput
                   style={[styles.input, styles.dateValueInput]}
                   placeholder="MM/DD"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={colors.textTertiary}
                   value={d.date.includes('-') ? format(parseISO(d.date), 'MM/dd') : d.date}
                   onChangeText={(v) => updateDate(i, 'date', v)}
                   keyboardType="numbers-and-punctuation"
@@ -212,31 +215,33 @@ export default function EditContactScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 20, gap: 24 },
-  form: { gap: 16 },
-  avatarRow: { alignItems: 'center', gap: 8, paddingVertical: 4 },
-  avatarHint: { fontSize: 12, color: Colors.textTertiary },
-  field: { gap: 6 },
-  label: { fontSize: 12, fontWeight: '600', color: Colors.textTertiary, letterSpacing: 0.6, textTransform: 'uppercase' },
-  input: {
-    backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border,
-    borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14,
-    fontSize: 16, color: Colors.text,
-  },
-  dateRow: { flexDirection: 'row', gap: 8, marginBottom: 8, alignItems: 'center' },
-  dateLabelInput: { flex: 2 },
-  dateValueInput: { flex: 1 },
-  removeBtn: { padding: 8 },
-  removeBtnText: { fontSize: 14, color: Colors.textTertiary },
-  addDateBtn: {
-    borderWidth: 1, borderColor: Colors.border, borderRadius: 12, borderStyle: 'dashed',
-    paddingVertical: 12, alignItems: 'center',
-  },
-  addDateBtnText: { fontSize: 14, color: Colors.textSecondary },
-  saveBtn: {
-    backgroundColor: Colors.text, borderRadius: 12,
-    paddingVertical: 16, alignItems: 'center',
-  },
-  saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-});
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    container: { padding: 20, gap: 24 },
+    form: { gap: 16 },
+    avatarRow: { alignItems: 'center', gap: 8, paddingVertical: 4 },
+    avatarHint: { fontSize: 12, color: colors.textTertiary },
+    field: { gap: 6 },
+    label: { fontSize: 12, fontWeight: '600', color: colors.textTertiary, letterSpacing: 0.6, textTransform: 'uppercase' },
+    input: {
+      backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+      borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14,
+      fontSize: 16, color: colors.text,
+    },
+    dateRow: { flexDirection: 'row', gap: 8, marginBottom: 8, alignItems: 'center' },
+    dateLabelInput: { flex: 2 },
+    dateValueInput: { flex: 1 },
+    removeBtn: { padding: 8 },
+    removeBtnText: { fontSize: 14, color: colors.textTertiary },
+    addDateBtn: {
+      borderWidth: 1, borderColor: colors.border, borderRadius: 12, borderStyle: 'dashed',
+      paddingVertical: 12, alignItems: 'center',
+    },
+    addDateBtnText: { fontSize: 14, color: colors.textSecondary },
+    saveBtn: {
+      backgroundColor: colors.text, borderRadius: 12,
+      paddingVertical: 16, alignItems: 'center',
+    },
+    saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  });
+}

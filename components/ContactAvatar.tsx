@@ -5,7 +5,8 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '@/lib/supabase';
-import { Colors } from '@/lib/colors';
+import { useTheme } from '@/context/ThemeContext';
+import { ColorScheme } from '@/lib/colors';
 
 interface Props {
   contactId: string;
@@ -21,6 +22,8 @@ export function ContactAvatar({
   contactId, userId, name, avatarUrl,
   size = 56, editable = false, onUpdated,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const [uploading, setUploading] = useState(false);
   const [localUri, setLocalUri] = useState<string | null>(null);
 
@@ -120,21 +123,23 @@ function stringToColor(name: string): string {
   return palette[Math.abs(hash) % palette.length];
 }
 
-const styles = StyleSheet.create({
-  wrap: { position: 'relative' },
-  image: { resizeMode: 'cover' },
-  initials: { alignItems: 'center', justifyContent: 'center' },
-  initialsText: { fontWeight: '700', color: Colors.text },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  editBadge: {
-    position: 'absolute', bottom: 0, right: 0,
-    backgroundColor: Colors.text, borderRadius: 10,
-    width: 20, height: 20, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderColor: Colors.background,
-  },
-  editBadgeText: { fontSize: 10, color: '#fff' },
-});
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    wrap: { position: 'relative' },
+    image: { resizeMode: 'cover' },
+    initials: { alignItems: 'center', justifyContent: 'center' },
+    initialsText: { fontWeight: '700', color: colors.text },
+    overlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: 'rgba(0,0,0,0.4)',
+      alignItems: 'center', justifyContent: 'center',
+    },
+    editBadge: {
+      position: 'absolute', bottom: 0, right: 0,
+      backgroundColor: colors.text, borderRadius: 10,
+      width: 20, height: 20, alignItems: 'center', justifyContent: 'center',
+      borderWidth: 1.5, borderColor: colors.background,
+    },
+    editBadgeText: { fontSize: 10, color: '#fff' },
+  });
+}

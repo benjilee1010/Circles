@@ -6,7 +6,8 @@ import {
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { format, parseISO } from 'date-fns';
 import { supabase } from '@/lib/supabase';
-import { Colors } from '@/lib/colors';
+import { useTheme } from '@/context/ThemeContext';
+import { ColorScheme } from '@/lib/colors';
 import { useContact } from '@/hooks/useContact';
 import { frequencyLabel } from '@/lib/frequencies';
 import { HangoutCalendar } from '@/components/HangoutCalendar';
@@ -22,6 +23,8 @@ export default function ContactScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const { session } = useAuth();
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const { contact, importantDates, interactions, loading, refresh } = useContact(id);
   const [tab, setTab] = useState<Tab>('overview');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -67,7 +70,7 @@ export default function ContactScreen() {
   if (loading || !contact) {
     return (
       <SafeAreaView style={styles.safe}>
-        <ActivityIndicator style={{ flex: 1 }} color={Colors.textTertiary} />
+        <ActivityIndicator style={{ flex: 1 }} color={colors.textTertiary} />
       </SafeAreaView>
     );
   }
@@ -115,12 +118,12 @@ export default function ContactScreen() {
             <View style={styles.infoCard}>
               <InfoRow label="Last contact" value={contact.last_contacted_at
                 ? format(parseISO(contact.last_contacted_at), 'MMM d, yyyy')
-                : 'Never'} />
+                : 'Never'} styles={styles} />
               {contact.birthday && (
-                <InfoRow label="Birthday" value={format(parseISO(contact.birthday), 'MMM d')} divider />
+                <InfoRow label="Birthday" value={format(parseISO(contact.birthday), 'MMM d')} divider styles={styles} />
               )}
               {importantDates.map((d, i) => (
-                <InfoRow key={d.id} label={d.label} value={format(parseISO(d.date), 'MMM d')} divider />
+                <InfoRow key={d.id} label={d.label} value={format(parseISO(d.date), 'MMM d')} divider styles={styles} />
               ))}
             </View>
 
@@ -145,6 +148,7 @@ export default function ContactScreen() {
                       label={format(parseISO(i.date), 'MMM d, yyyy')}
                       value={i.note ?? ''}
                       divider={idx > 0}
+                      styles={styles}
                     />
                   ))}
                 </View>
@@ -179,7 +183,14 @@ export default function ContactScreen() {
   );
 }
 
-function InfoRow({ label, value, divider }: { label: string; value: string; divider?: boolean }) {
+function InfoRow({
+  label, value, divider, styles,
+}: {
+  label: string;
+  value: string;
+  divider?: boolean;
+  styles: ReturnType<typeof makeStyles>;
+}) {
   return (
     <>
       {divider && <View style={styles.infoSep} />}
@@ -191,49 +202,51 @@ function InfoRow({ label, value, divider }: { label: string; value: string; divi
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  profileHeader: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 20, paddingVertical: 16, gap: 14,
-  },
-  profileMeta: { flex: 1 },
-  profileName: { fontSize: 20, fontWeight: '700', color: Colors.text },
-  profileSub: { fontSize: 13, color: Colors.textSecondary, marginTop: 2 },
-  editBtn: {
-    borderWidth: 1, borderColor: Colors.border, borderRadius: 8,
-    paddingHorizontal: 12, paddingVertical: 6,
-  },
-  editBtnText: { fontSize: 13, fontWeight: '500', color: Colors.text },
-  tabBar: {
-    flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: Colors.border,
-    paddingHorizontal: 20,
-  },
-  tabBtn: { paddingVertical: 12, paddingHorizontal: 4, marginRight: 20 },
-  tabBtnActive: { borderBottomWidth: 2, borderBottomColor: Colors.text },
-  tabLabel: { fontSize: 14, fontWeight: '500', color: Colors.textSecondary },
-  tabLabelActive: { color: Colors.text },
-  tabContent: { padding: 20, gap: 12 },
-  infoCard: {
-    backgroundColor: Colors.surface, borderRadius: 12,
-    borderWidth: 1, borderColor: Colors.border,
-  },
-  infoRow: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 16, paddingVertical: 13,
-  },
-  infoLabel: { fontSize: 15, color: Colors.textSecondary },
-  infoValue: { fontSize: 15, color: Colors.text, fontWeight: '500' },
-  infoSep: { height: 1, backgroundColor: Colors.border, marginHorizontal: 16 },
-  logBtn: {
-    backgroundColor: Colors.text, borderRadius: 12,
-    paddingVertical: 16, alignItems: 'center',
-  },
-  logBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
-  sectionLabel: {
-    fontSize: 12, fontWeight: '600', color: Colors.textTertiary,
-    letterSpacing: 0.8, textTransform: 'uppercase', marginTop: 4,
-  },
-  deleteBtn: { marginTop: 24, alignItems: 'center' },
-  deleteBtnText: { fontSize: 14, color: Colors.overdue },
-});
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    profileHeader: {
+      flexDirection: 'row', alignItems: 'center',
+      paddingHorizontal: 20, paddingVertical: 16, gap: 14,
+    },
+    profileMeta: { flex: 1 },
+    profileName: { fontSize: 20, fontWeight: '700', color: colors.text },
+    profileSub: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+    editBtn: {
+      borderWidth: 1, borderColor: colors.border, borderRadius: 8,
+      paddingHorizontal: 12, paddingVertical: 6,
+    },
+    editBtnText: { fontSize: 13, fontWeight: '500', color: colors.text },
+    tabBar: {
+      flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: colors.border,
+      paddingHorizontal: 20,
+    },
+    tabBtn: { paddingVertical: 12, paddingHorizontal: 4, marginRight: 20 },
+    tabBtnActive: { borderBottomWidth: 2, borderBottomColor: colors.text },
+    tabLabel: { fontSize: 14, fontWeight: '500', color: colors.textSecondary },
+    tabLabelActive: { color: colors.text },
+    tabContent: { padding: 20, gap: 12 },
+    infoCard: {
+      backgroundColor: colors.surface, borderRadius: 12,
+      borderWidth: 1, borderColor: colors.border,
+    },
+    infoRow: {
+      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+      paddingHorizontal: 16, paddingVertical: 13,
+    },
+    infoLabel: { fontSize: 15, color: colors.textSecondary },
+    infoValue: { fontSize: 15, color: colors.text, fontWeight: '500' },
+    infoSep: { height: 1, backgroundColor: colors.border, marginHorizontal: 16 },
+    logBtn: {
+      backgroundColor: colors.text, borderRadius: 12,
+      paddingVertical: 16, alignItems: 'center',
+    },
+    logBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+    sectionLabel: {
+      fontSize: 12, fontWeight: '600', color: colors.textTertiary,
+      letterSpacing: 0.8, textTransform: 'uppercase', marginTop: 4,
+    },
+    deleteBtn: { marginTop: 24, alignItems: 'center' },
+    deleteBtnText: { fontSize: 14, color: colors.overdue },
+  });
+}

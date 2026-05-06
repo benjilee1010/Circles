@@ -5,7 +5,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
-import { Colors } from '@/lib/colors';
+import { useTheme } from '@/context/ThemeContext';
+import { ColorScheme } from '@/lib/colors';
 import { FrequencyPicker } from '@/components/FrequencyPicker';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { ReminderFrequency } from '@/lib/types';
@@ -13,6 +14,8 @@ import { PageContainer } from '@/components/PageContainer';
 
 export default function AddContactScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const [name, setName] = useState('');
   const [birthday, setBirthday] = useState('');
   const [frequency, setFrequency] = useState<ReminderFrequency>('1m');
@@ -67,7 +70,7 @@ export default function AddContactScreen() {
             <TextInput
               style={styles.input}
               placeholder="Full name"
-              placeholderTextColor={Colors.textTertiary}
+              placeholderTextColor={colors.textTertiary}
               value={name}
               onChangeText={setName}
               autoFocus
@@ -79,7 +82,7 @@ export default function AddContactScreen() {
             <TextInput
               style={styles.input}
               placeholder="MM/DD or MM/DD/YYYY"
-              placeholderTextColor={Colors.textTertiary}
+              placeholderTextColor={colors.textTertiary}
               value={birthday}
               onChangeText={setBirthday}
               keyboardType="numbers-and-punctuation"
@@ -108,19 +111,21 @@ export default function AddContactScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 20, gap: 24 },
-  form: { gap: 16 },
-  field: { gap: 6 },
-  label: { fontSize: 12, fontWeight: '600', color: Colors.textTertiary, letterSpacing: 0.6, textTransform: 'uppercase' },
-  input: {
-    backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border,
-    borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14,
-    fontSize: 16, color: Colors.text,
-  },
-  saveBtn: {
-    backgroundColor: Colors.text, borderRadius: 12,
-    paddingVertical: 16, alignItems: 'center',
-  },
-  saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-});
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    container: { padding: 20, gap: 24 },
+    form: { gap: 16 },
+    field: { gap: 6 },
+    label: { fontSize: 12, fontWeight: '600', color: colors.textTertiary, letterSpacing: 0.6, textTransform: 'uppercase' },
+    input: {
+      backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+      borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14,
+      fontSize: 16, color: colors.text,
+    },
+    saveBtn: {
+      backgroundColor: colors.text, borderRadius: 12,
+      paddingVertical: 16, alignItems: 'center',
+    },
+    saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  });
+}

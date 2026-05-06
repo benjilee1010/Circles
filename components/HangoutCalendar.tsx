@@ -3,7 +3,8 @@ import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
 } from 'react-native';
 import { format, startOfWeek, addDays, addWeeks, isFuture, differenceInDays } from 'date-fns';
-import { Colors } from '@/lib/colors';
+import { useTheme } from '@/context/ThemeContext';
+import { ColorScheme } from '@/lib/colors';
 
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const NUM_WEEKS = 12;
@@ -16,6 +17,8 @@ interface Props {
 }
 
 export function HangoutCalendar({ loggedDates, onDayPress, contactName, lastContactedAt }: Props) {
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const [weekOffset, setWeekOffset] = useState(0);
   const today = new Date();
   const weekStart = addWeeks(startOfWeek(today, { weekStartsOn: 0 }), weekOffset);
@@ -127,61 +130,63 @@ export function HangoutCalendar({ loggedDates, onDayPress, contactName, lastCont
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
 
-  banner: {
-    marginHorizontal: 16, marginTop: 12, marginBottom: 4,
-    backgroundColor: Colors.surfaceAlt,
-    borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10,
-  },
-  bannerText: {
-    fontSize: 13, color: Colors.textSecondary,
-    textAlign: 'center', lineHeight: 18,
-  },
+    banner: {
+      marginHorizontal: 16, marginTop: 12, marginBottom: 4,
+      backgroundColor: colors.surfaceAlt,
+      borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10,
+    },
+    bannerText: {
+      fontSize: 13, color: colors.textSecondary,
+      textAlign: 'center', lineHeight: 18,
+    },
 
-  nav: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingVertical: 12,
-  },
-  navBtn: { padding: 8 },
-  navArrow: { fontSize: 24, color: Colors.text, fontWeight: '300' },
-  navArrowDisabled: { color: Colors.textTertiary },
-  weekLabel: { fontSize: 14, fontWeight: '600', color: Colors.text },
+    nav: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: 20, paddingVertical: 12,
+    },
+    navBtn: { padding: 8 },
+    navArrow: { fontSize: 24, color: colors.text, fontWeight: '300' },
+    navArrowDisabled: { color: colors.textTertiary },
+    weekLabel: { fontSize: 14, fontWeight: '600', color: colors.text },
 
-  dayHeaders: { flexDirection: 'row', paddingHorizontal: 16, marginBottom: 4 },
-  dayHeader: {
-    flex: 1, textAlign: 'center', fontSize: 12,
-    fontWeight: '600', color: Colors.textTertiary, letterSpacing: 0.5,
-  },
+    dayHeaders: { flexDirection: 'row', paddingHorizontal: 16, marginBottom: 4 },
+    dayHeader: {
+      flex: 1, textAlign: 'center', fontSize: 12,
+      fontWeight: '600', color: colors.textTertiary, letterSpacing: 0.5,
+    },
 
-  dayRow: { flexDirection: 'row', paddingHorizontal: 16, marginBottom: 20 },
-  dayCell: {
-    flex: 1, aspectRatio: 1, borderRadius: 10, margin: 3,
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: Colors.surfaceAlt,
-  },
-  dayCellLogged: { backgroundColor: Colors.text },
-  dayCellToday: { borderWidth: 1.5, borderColor: Colors.text, backgroundColor: Colors.surfaceAlt },
-  dayNum: { fontSize: 15, fontWeight: '500', color: Colors.text },
-  dayNumLogged: { color: '#fff', fontWeight: '700' },
-  dayNumFuture: { color: Colors.textTertiary },
+    dayRow: { flexDirection: 'row', paddingHorizontal: 16, marginBottom: 20 },
+    dayCell: {
+      flex: 1, aspectRatio: 1, borderRadius: 10, margin: 3,
+      alignItems: 'center', justifyContent: 'center',
+      backgroundColor: colors.surfaceAlt,
+    },
+    dayCellLogged: { backgroundColor: colors.text },
+    dayCellToday: { borderWidth: 1.5, borderColor: colors.text, backgroundColor: colors.surfaceAlt },
+    dayNum: { fontSize: 15, fontWeight: '500', color: colors.text },
+    dayNumLogged: { color: '#fff', fontWeight: '700' },
+    dayNumFuture: { color: colors.textTertiary },
 
-  historyScroll: { paddingHorizontal: 16, paddingBottom: 32 },
-  historyLabel: {
-    fontSize: 12, fontWeight: '600', color: Colors.textTertiary,
-    letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 10,
-  },
-  historyRow: {
-    flexDirection: 'row', alignItems: 'center', marginBottom: 8,
-  },
-  historyWeek: { fontSize: 11, color: Colors.textSecondary, width: 46 },
-  // flex: 1 + each dotWrap flex: 1 → dots spread edge-to-edge
-  historyDots: { flex: 1, flexDirection: 'row' },
-  dotWrap: { flex: 1, alignItems: 'center', paddingVertical: 3 },
-  dot: {
-    width: '80%' as any, aspectRatio: 1, borderRadius: 5,
-    backgroundColor: Colors.surfaceAlt,
-  },
-  dotLogged: { backgroundColor: Colors.text },
-});
+    historyScroll: { paddingHorizontal: 16, paddingBottom: 32 },
+    historyLabel: {
+      fontSize: 12, fontWeight: '600', color: colors.textTertiary,
+      letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 10,
+    },
+    historyRow: {
+      flexDirection: 'row', alignItems: 'center', marginBottom: 8,
+    },
+    historyWeek: { fontSize: 11, color: colors.textSecondary, width: 46 },
+    // flex: 1 + each dotWrap flex: 1 → dots spread edge-to-edge
+    historyDots: { flex: 1, flexDirection: 'row' },
+    dotWrap: { flex: 1, alignItems: 'center', paddingVertical: 3 },
+    dot: {
+      width: '80%' as any, aspectRatio: 1, borderRadius: 5,
+      backgroundColor: colors.surfaceAlt,
+    },
+    dotLogged: { backgroundColor: colors.text },
+  });
+}

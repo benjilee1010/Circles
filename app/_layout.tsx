@@ -4,11 +4,13 @@ import { Platform } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { ThemeProvider, useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/lib/colors';
 import { requestNotificationPermission, scheduleContactReminders } from '@/lib/notifications';
 
 function RootLayoutNav() {
   const { session, loading } = useAuth();
+  const { colors } = useTheme();
   const router = useRouter();
   const segments = useSegments();
 
@@ -27,7 +29,7 @@ function RootLayoutNav() {
   }, [session, loading, segments]);
 
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.background } }}>
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen
@@ -35,8 +37,8 @@ function RootLayoutNav() {
         options={{
           headerShown: true,
           headerBackTitle: '',
-          headerTintColor: Colors.text,
-          headerStyle: { backgroundColor: Colors.background },
+          headerTintColor: colors.text,
+          headerStyle: { backgroundColor: colors.background },
           headerShadowVisible: false,
           title: '',
         }}
@@ -46,8 +48,8 @@ function RootLayoutNav() {
         options={{
           presentation: 'modal',
           headerShown: true,
-          headerTintColor: Colors.text,
-          headerStyle: { backgroundColor: Colors.background },
+          headerTintColor: colors.text,
+          headerStyle: { backgroundColor: colors.background },
           headerShadowVisible: false,
           title: 'New Person',
         }}
@@ -57,10 +59,32 @@ function RootLayoutNav() {
         options={{
           presentation: 'modal',
           headerShown: true,
-          headerTintColor: Colors.text,
-          headerStyle: { backgroundColor: Colors.background },
+          headerTintColor: colors.text,
+          headerStyle: { backgroundColor: colors.background },
           headerShadowVisible: false,
           title: 'Edit',
+        }}
+      />
+      <Stack.Screen
+        name="settings/change-password"
+        options={{
+          presentation: 'modal',
+          headerShown: true,
+          headerTintColor: colors.text,
+          headerStyle: { backgroundColor: colors.background },
+          headerShadowVisible: false,
+          title: 'Change Password',
+        }}
+      />
+      <Stack.Screen
+        name="settings/change-email"
+        options={{
+          presentation: 'modal',
+          headerShown: true,
+          headerTintColor: colors.text,
+          headerStyle: { backgroundColor: colors.background },
+          headerShadowVisible: false,
+          title: 'Change Email',
         }}
       />
     </Stack>
@@ -69,9 +93,11 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <StatusBar style="dark" />
-      <RootLayoutNav />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <StatusBar style="auto" />
+        <RootLayoutNav />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

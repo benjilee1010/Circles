@@ -5,7 +5,8 @@ import {
 } from 'react-native';
 import { format, subDays, parseISO, isToday, isYesterday } from 'date-fns';
 import { supabase } from '@/lib/supabase';
-import { Colors } from '@/lib/colors';
+import { useTheme } from '@/context/ThemeContext';
+import { ColorScheme } from '@/lib/colors';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -97,9 +98,11 @@ interface DatePickerProps {
   existingDates: Set<string>;
   onPick: (dateStr: string) => void;
   onCancel: () => void;
+  colors: ColorScheme;
+  styles: ReturnType<typeof makeStyles>;
 }
 
-function DatePickerModal({ visible, existingDates, onPick, onCancel }: DatePickerProps) {
+function DatePickerModal({ visible, existingDates, onPick, onCancel, colors, styles }: DatePickerProps) {
   const [customInput, setCustomInput] = useState('');
   const [customError, setCustomError] = useState('');
   const [showCustom, setShowCustom] = useState(false);
@@ -166,7 +169,7 @@ function DatePickerModal({ visible, existingDates, onPick, onCancel }: DatePicke
               <TextInput
                 style={[styles.customInput, customError ? styles.customInputError : null]}
                 placeholder="MM/DD or MM/DD/YYYY"
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={colors.textTertiary}
                 value={customInput}
                 onChangeText={(t) => { setCustomInput(t); setCustomError(''); }}
                 keyboardType="numbers-and-punctuation"
@@ -197,6 +200,8 @@ interface Props {
 }
 
 export function NotesTab({ contactId, contactName, initialNotes }: Props) {
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const [data, setData] = useState<NotesData>(() => parseNotes(initialNotes));
   const [saving, setSaving] = useState(false);
   const [showPrompts, setShowPrompts] = useState(false);
@@ -304,7 +309,7 @@ export function NotesTab({ contactId, contactName, initialNotes }: Props) {
       >
         {saving && (
           <View style={styles.savingRow}>
-            <ActivityIndicator size="small" color={Colors.textTertiary} />
+            <ActivityIndicator size="small" color={colors.textTertiary} />
             <Text style={styles.savingText}>Saving…</Text>
           </View>
         )}
@@ -347,7 +352,7 @@ export function NotesTab({ contactId, contactName, initialNotes }: Props) {
               style={styles.convoInput}
               multiline
               placeholder="What did you talk about? Anything worth remembering…"
-              placeholderTextColor={Colors.textTertiary}
+              placeholderTextColor={colors.textTertiary}
               value={entry.text}
               onChangeText={(t) => updateConvoText(entry.id, t)}
               textAlignVertical="top"
@@ -411,7 +416,7 @@ export function NotesTab({ contactId, contactName, initialNotes }: Props) {
                 value={section.label}
                 onChangeText={(t) => updateSection(section.id, 'label', t)}
                 placeholder="Section name"
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={colors.textTertiary}
               />
               <TouchableOpacity
                 onPress={() => deleteSection(section.id)}
@@ -425,7 +430,7 @@ export function NotesTab({ contactId, contactName, initialNotes }: Props) {
               style={styles.profileInput}
               multiline
               placeholder={placeholderFor(section.id)}
-              placeholderTextColor={Colors.textTertiary}
+              placeholderTextColor={colors.textTertiary}
               value={section.content}
               onChangeText={(t) => updateSection(section.id, 'content', t)}
               textAlignVertical="top"
@@ -442,6 +447,8 @@ export function NotesTab({ contactId, contactName, initialNotes }: Props) {
         existingDates={existingColvoDates}
         onPick={handleDatePicked}
         onCancel={() => setDatePickerMode(null)}
+        colors={colors}
+        styles={styles}
       />
     </>
   );
@@ -470,133 +477,135 @@ function placeholderFor(id: string): string {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: 20, paddingBottom: 60 },
-  savingRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
-  savingText: { fontSize: 12, color: Colors.textTertiary },
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    scroll: { flex: 1, backgroundColor: colors.background },
+    content: { padding: 20, paddingBottom: 60 },
+    savingRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+    savingText: { fontSize: 12, color: colors.textTertiary },
 
-  blockHeader: {
-    flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', marginBottom: 10,
-  },
-  blockTitle: { fontSize: 16, fontWeight: '700', color: Colors.text },
-  addBtn: {
-    borderWidth: 1, borderColor: Colors.border, borderRadius: 8,
-    paddingHorizontal: 10, paddingVertical: 5,
-  },
-  addBtnText: { fontSize: 13, fontWeight: '500', color: Colors.text },
+    blockHeader: {
+      flexDirection: 'row', alignItems: 'center',
+      justifyContent: 'space-between', marginBottom: 10,
+    },
+    blockTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
+    addBtn: {
+      borderWidth: 1, borderColor: colors.border, borderRadius: 8,
+      paddingHorizontal: 10, paddingVertical: 5,
+    },
+    addBtnText: { fontSize: 13, fontWeight: '500', color: colors.text },
 
-  emptyCard: {
-    backgroundColor: Colors.surfaceAlt, borderRadius: 12,
-    padding: 16, marginBottom: 8,
-  },
-  emptyText: { fontSize: 14, color: Colors.textSecondary, lineHeight: 20 },
+    emptyCard: {
+      backgroundColor: colors.surfaceAlt, borderRadius: 12,
+      padding: 16, marginBottom: 8,
+    },
+    emptyText: { fontSize: 14, color: colors.textSecondary, lineHeight: 20 },
 
-  // Jump nav
-  jumpNav: { marginBottom: 12 },
-  jumpNavContent: { gap: 8, paddingRight: 4 },
-  jumpChip: {
-    borderWidth: 1, borderColor: Colors.accentDark, borderRadius: 20,
-    paddingHorizontal: 12, paddingVertical: 5,
-    backgroundColor: Colors.surfaceAlt,
-  },
-  jumpChipText: { fontSize: 12, fontWeight: '600', color: Colors.accentDark },
+    // Jump nav
+    jumpNav: { marginBottom: 12 },
+    jumpNavContent: { gap: 8, paddingRight: 4 },
+    jumpChip: {
+      borderWidth: 1, borderColor: colors.accentDark, borderRadius: 20,
+      paddingHorizontal: 12, paddingVertical: 5,
+      backgroundColor: colors.surfaceAlt,
+    },
+    jumpChipText: { fontSize: 12, fontWeight: '600', color: colors.accentDark },
 
-  // Conversation cards
-  convoCard: {
-    backgroundColor: Colors.surface, borderRadius: 12,
-    borderWidth: 1, borderColor: Colors.border,
-    marginBottom: 10, overflow: 'hidden',
-  },
-  convoHeader: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 14, paddingVertical: 10,
-    borderBottomWidth: 1, borderBottomColor: Colors.border,
-    backgroundColor: Colors.surfaceAlt,
-  },
-  dateBadge: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.text, borderRadius: 6,
-    paddingHorizontal: 8, paddingVertical: 3,
-  },
-  dateBadgeText: { fontSize: 12, fontWeight: '600', color: '#fff' },
-  dateBadgeEdit: { fontSize: 11, color: 'rgba(255,255,255,0.65)' },
-  deleteX: { fontSize: 14, color: Colors.textTertiary },
-  convoInput: {
-    fontSize: 15, lineHeight: 23, color: Colors.text,
-    padding: 14, minHeight: 90,
-  },
+    // Conversation cards
+    convoCard: {
+      backgroundColor: colors.surface, borderRadius: 12,
+      borderWidth: 1, borderColor: colors.border,
+      marginBottom: 10, overflow: 'hidden',
+    },
+    convoHeader: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: 14, paddingVertical: 10,
+      borderBottomWidth: 1, borderBottomColor: colors.border,
+      backgroundColor: colors.surfaceAlt,
+    },
+    dateBadge: {
+      flexDirection: 'row', alignItems: 'center',
+      backgroundColor: colors.text, borderRadius: 6,
+      paddingHorizontal: 8, paddingVertical: 3,
+    },
+    dateBadgeText: { fontSize: 12, fontWeight: '600', color: '#fff' },
+    dateBadgeEdit: { fontSize: 11, color: 'rgba(255,255,255,0.65)' },
+    deleteX: { fontSize: 14, color: colors.textTertiary },
+    convoInput: {
+      fontSize: 15, lineHeight: 23, color: colors.text,
+      padding: 14, minHeight: 90,
+    },
 
-  // Prompt chips
-  promptGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
-  promptChip: {
-    borderWidth: 1, borderColor: Colors.border, borderRadius: 20,
-    paddingHorizontal: 12, paddingVertical: 6,
-    backgroundColor: Colors.surface,
-  },
-  promptChipCustom: { borderStyle: 'dashed' },
-  promptChipText: { fontSize: 13, color: Colors.text },
+    // Prompt chips
+    promptGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
+    promptChip: {
+      borderWidth: 1, borderColor: colors.border, borderRadius: 20,
+      paddingHorizontal: 12, paddingVertical: 6,
+      backgroundColor: colors.surface,
+    },
+    promptChipCustom: { borderStyle: 'dashed' },
+    promptChipText: { fontSize: 13, color: colors.text },
 
-  // Profile section cards
-  profileCard: {
-    backgroundColor: Colors.surface, borderRadius: 12,
-    borderWidth: 1, borderColor: Colors.border,
-    marginBottom: 10, overflow: 'hidden',
-  },
-  profileCardHeader: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 14, paddingTop: 12, paddingBottom: 4,
-  },
-  sectionLabelInput: {
-    flex: 1, fontSize: 12, fontWeight: '700',
-    color: Colors.textSecondary, letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
-  divider: { height: 1, backgroundColor: Colors.border, marginHorizontal: 14, marginBottom: 2 },
-  profileInput: {
-    fontSize: 15, lineHeight: 23, color: Colors.text,
-    padding: 14, paddingTop: 10, minHeight: 70,
-  },
+    // Profile section cards
+    profileCard: {
+      backgroundColor: colors.surface, borderRadius: 12,
+      borderWidth: 1, borderColor: colors.border,
+      marginBottom: 10, overflow: 'hidden',
+    },
+    profileCardHeader: {
+      flexDirection: 'row', alignItems: 'center',
+      paddingHorizontal: 14, paddingTop: 12, paddingBottom: 4,
+    },
+    sectionLabelInput: {
+      flex: 1, fontSize: 12, fontWeight: '700',
+      color: colors.textSecondary, letterSpacing: 0.8,
+      textTransform: 'uppercase',
+    },
+    divider: { height: 1, backgroundColor: colors.border, marginHorizontal: 14, marginBottom: 2 },
+    profileInput: {
+      fontSize: 15, lineHeight: 23, color: colors.text,
+      padding: 14, paddingTop: 10, minHeight: 70,
+    },
 
-  // Date picker modal
-  modalBackdrop: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.35)',
-    justifyContent: 'flex-end',
-  },
-  modalSheet: {
-    backgroundColor: Colors.background, borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    padding: 24, paddingBottom: 40,
-  },
-  modalTitle: {
-    fontSize: 17, fontWeight: '700', color: Colors.text,
-    marginBottom: 18, textAlign: 'center',
-  },
-  quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  quickChip: {
-    borderWidth: 1, borderColor: Colors.border, borderRadius: 20,
-    paddingHorizontal: 14, paddingVertical: 8,
-    backgroundColor: Colors.surface,
-  },
-  quickChipUsed: { borderColor: Colors.accentDark, backgroundColor: Colors.surfaceAlt },
-  quickChipText: { fontSize: 14, color: Colors.text },
-  quickChipTextUsed: { color: Colors.accentDark },
-  quickChipDot: { fontSize: 14, color: Colors.accentDark },
-  customToggle: { alignItems: 'center', paddingVertical: 10 },
-  customToggleText: { fontSize: 14, color: Colors.textSecondary, textDecorationLine: 'underline' },
-  customRow: { flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 4 },
-  customInput: {
-    flex: 1, borderWidth: 1, borderColor: Colors.border, borderRadius: 10,
-    paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: Colors.text,
-    backgroundColor: Colors.surface,
-  },
-  customInputError: { borderColor: Colors.overdue },
-  customGoBtn: {
-    backgroundColor: Colors.text, borderRadius: 10,
-    paddingHorizontal: 18, paddingVertical: 11,
-  },
-  customGoBtnText: { color: '#fff', fontWeight: '600', fontSize: 15 },
-  customError: { fontSize: 13, color: Colors.overdue, marginBottom: 8, marginLeft: 2 },
-  cancelBtn: { alignItems: 'center', paddingVertical: 14 },
-  cancelBtnText: { fontSize: 15, color: Colors.textSecondary },
-});
+    // Date picker modal
+    modalBackdrop: {
+      flex: 1, backgroundColor: 'rgba(0,0,0,0.35)',
+      justifyContent: 'flex-end',
+    },
+    modalSheet: {
+      backgroundColor: colors.background, borderTopLeftRadius: 20, borderTopRightRadius: 20,
+      padding: 24, paddingBottom: 40,
+    },
+    modalTitle: {
+      fontSize: 17, fontWeight: '700', color: colors.text,
+      marginBottom: 18, textAlign: 'center',
+    },
+    quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
+    quickChip: {
+      borderWidth: 1, borderColor: colors.border, borderRadius: 20,
+      paddingHorizontal: 14, paddingVertical: 8,
+      backgroundColor: colors.surface,
+    },
+    quickChipUsed: { borderColor: colors.accentDark, backgroundColor: colors.surfaceAlt },
+    quickChipText: { fontSize: 14, color: colors.text },
+    quickChipTextUsed: { color: colors.accentDark },
+    quickChipDot: { fontSize: 14, color: colors.accentDark },
+    customToggle: { alignItems: 'center', paddingVertical: 10 },
+    customToggleText: { fontSize: 14, color: colors.textSecondary, textDecorationLine: 'underline' },
+    customRow: { flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 4 },
+    customInput: {
+      flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: 10,
+      paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: colors.text,
+      backgroundColor: colors.surface,
+    },
+    customInputError: { borderColor: colors.overdue },
+    customGoBtn: {
+      backgroundColor: colors.text, borderRadius: 10,
+      paddingHorizontal: 18, paddingVertical: 11,
+    },
+    customGoBtnText: { color: '#fff', fontWeight: '600', fontSize: 15 },
+    customError: { fontSize: 13, color: colors.overdue, marginBottom: 8, marginLeft: 2 },
+    cancelBtn: { alignItems: 'center', paddingVertical: 14 },
+    cancelBtnText: { fontSize: 15, color: colors.textSecondary },
+  });
+}

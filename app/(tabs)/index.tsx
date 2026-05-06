@@ -5,7 +5,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import { Colors } from '@/lib/colors';
+import { useTheme } from '@/context/ThemeContext';
+import { ColorScheme } from '@/lib/colors';
 import { useContacts } from '@/hooks/useContacts';
 import { useCategories } from '@/hooks/useCategories';
 import { ContactWithMeta } from '@/lib/types';
@@ -15,6 +16,8 @@ import { PageContainer } from '@/components/PageContainer';
 
 export default function PeopleScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const { contacts, loading, refresh } = useContacts();
   const { allCategories, refresh: refreshCategories } = useCategories();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -30,8 +33,8 @@ export default function PeopleScreen() {
     : contacts;
 
   const renderItem = useCallback(({ item }: { item: ContactWithMeta }) => (
-    <ContactRow contact={item} onPress={() => router.push(`/contact/${item.id}`)} />
-  ), [router]);
+    <ContactRow contact={item} onPress={() => router.push(`/contact/${item.id}`)} colors={colors} styles={styles} />
+  ), [router, colors, styles]);
 
   // Count per category for the chips
   const countFor = (cat: string) => contacts.filter((c) => c.category === cat).length;
@@ -111,7 +114,7 @@ export default function PeopleScreen() {
           : filtered}
         keyExtractor={(c) => c.id}
         renderItem={renderItem}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={refresh} tintColor={Colors.textTertiary} />}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={refresh} tintColor={colors.textTertiary} />}
         contentContainerStyle={styles.list}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListEmptyComponent={
@@ -138,9 +141,16 @@ export default function PeopleScreen() {
   );
 }
 
-function ContactRow({ contact, onPress }: { contact: ContactWithMeta; onPress: () => void }) {
-  const statusColor = contact.is_overdue ? Colors.overdue : Colors.ok;
-  const statusBg = contact.is_overdue ? Colors.overdueLight : Colors.okLight;
+function ContactRow({
+  contact, onPress, colors, styles,
+}: {
+  contact: ContactWithMeta;
+  onPress: () => void;
+  colors: ColorScheme;
+  styles: ReturnType<typeof makeStyles>;
+}) {
+  const statusColor = contact.is_overdue ? colors.overdue : colors.ok;
+  const statusBg = contact.is_overdue ? colors.overdueLight : colors.okLight;
   const daysLabel = contact.days_since_contact === null
     ? 'Never'
     : contact.days_since_contact === 0
@@ -174,58 +184,60 @@ function ContactRow({ contact, onPress }: { contact: ContactWithMeta; onPress: (
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingVertical: 16,
-  },
-  title: { fontSize: 28, fontWeight: '700', color: Colors.text, letterSpacing: -0.5 },
-  addBtn: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: Colors.text, alignItems: 'center', justifyContent: 'center',
-  },
-  addBtnText: { color: '#fff', fontSize: 22, lineHeight: 28, fontWeight: '300' },
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    header: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: 20, paddingVertical: 16,
+    },
+    title: { fontSize: 28, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
+    addBtn: {
+      width: 36, height: 36, borderRadius: 18,
+      backgroundColor: colors.text, alignItems: 'center', justifyContent: 'center',
+    },
+    addBtnText: { color: '#fff', fontSize: 22, lineHeight: 28, fontWeight: '300' },
 
-  // Filter bar
-  filterBar: { flexGrow: 0, marginBottom: 4 },
-  filterBarContent: { paddingHorizontal: 16, paddingVertical: 6, gap: 8 },
-  filterChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    borderWidth: 1, borderColor: Colors.border, borderRadius: 20,
-    paddingHorizontal: 12, paddingVertical: 6,
-    backgroundColor: Colors.surface,
-  },
-  filterChipActive: { backgroundColor: Colors.text, borderColor: Colors.text },
-  filterChipText: { fontSize: 13, fontWeight: '500', color: Colors.textSecondary },
-  filterChipTextActive: { color: '#fff' },
-  filterChipCount: {
-    fontSize: 11, fontWeight: '700', color: Colors.textTertiary,
-    backgroundColor: Colors.surfaceAlt, borderRadius: 8,
-    paddingHorizontal: 5, paddingVertical: 1, overflow: 'hidden',
-  },
-  filterChipCountActive: { color: 'rgba(255,255,255,0.75)', backgroundColor: 'rgba(255,255,255,0.2)' },
+    // Filter bar
+    filterBar: { flexGrow: 0, marginBottom: 4 },
+    filterBarContent: { paddingHorizontal: 16, paddingVertical: 6, gap: 8 },
+    filterChip: {
+      flexDirection: 'row', alignItems: 'center', gap: 5,
+      borderWidth: 1, borderColor: colors.border, borderRadius: 20,
+      paddingHorizontal: 12, paddingVertical: 6,
+      backgroundColor: colors.surface,
+    },
+    filterChipActive: { backgroundColor: colors.text, borderColor: colors.text },
+    filterChipText: { fontSize: 13, fontWeight: '500', color: colors.textSecondary },
+    filterChipTextActive: { color: '#fff' },
+    filterChipCount: {
+      fontSize: 11, fontWeight: '700', color: colors.textTertiary,
+      backgroundColor: colors.surfaceAlt, borderRadius: 8,
+      paddingHorizontal: 5, paddingVertical: 1, overflow: 'hidden',
+    },
+    filterChipCountActive: { color: 'rgba(255,255,255,0.75)', backgroundColor: 'rgba(255,255,255,0.2)' },
 
-  list: { paddingBottom: 32 },
-  separator: { height: 1, backgroundColor: Colors.border, marginLeft: 72 },
-  row: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 20, paddingVertical: 14,
-    backgroundColor: Colors.background,
-  },
-  rowPressed: { backgroundColor: Colors.surfaceAlt },
-  avatarWrap: { marginRight: 12 },
-  rowMeta: { flex: 1 },
-  rowName: { fontSize: 16, fontWeight: '500', color: Colors.text },
-  rowSub: { fontSize: 13, color: Colors.textSecondary, marginTop: 2 },
-  badge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  badgeText: { fontSize: 12, fontWeight: '600' },
-  empty: { flex: 1, alignItems: 'center', paddingTop: 80, paddingHorizontal: 32 },
-  emptyTitle: { fontSize: 20, fontWeight: '600', color: Colors.text, marginBottom: 8 },
-  emptyBody: { fontSize: 15, color: Colors.textSecondary, textAlign: 'center', lineHeight: 22 },
-  emptyBtn: {
-    marginTop: 24, backgroundColor: Colors.text,
-    paddingHorizontal: 24, paddingVertical: 14, borderRadius: 12,
-  },
-  emptyBtnText: { color: '#fff', fontWeight: '600', fontSize: 15 },
-});
+    list: { paddingBottom: 32 },
+    separator: { height: 1, backgroundColor: colors.border, marginLeft: 72 },
+    row: {
+      flexDirection: 'row', alignItems: 'center',
+      paddingHorizontal: 20, paddingVertical: 14,
+      backgroundColor: colors.background,
+    },
+    rowPressed: { backgroundColor: colors.surfaceAlt },
+    avatarWrap: { marginRight: 12 },
+    rowMeta: { flex: 1 },
+    rowName: { fontSize: 16, fontWeight: '500', color: colors.text },
+    rowSub: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+    badge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+    badgeText: { fontSize: 12, fontWeight: '600' },
+    empty: { flex: 1, alignItems: 'center', paddingTop: 80, paddingHorizontal: 32 },
+    emptyTitle: { fontSize: 20, fontWeight: '600', color: colors.text, marginBottom: 8 },
+    emptyBody: { fontSize: 15, color: colors.textSecondary, textAlign: 'center', lineHeight: 22 },
+    emptyBtn: {
+      marginTop: 24, backgroundColor: colors.text,
+      paddingHorizontal: 24, paddingVertical: 14, borderRadius: 12,
+    },
+    emptyBtnText: { color: '#fff', fontWeight: '600', fontSize: 15 },
+  });
+}

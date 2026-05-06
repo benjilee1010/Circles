@@ -1,43 +1,36 @@
 import { Tabs } from 'expo-router';
-import { Colors } from '@/lib/colors';
 import { Platform } from 'react-native';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function TabsLayout() {
+  const { colors } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: Colors.text,
-        tabBarInactiveTintColor: Colors.textTertiary,
+        tabBarActiveTintColor: colors.text,
+        tabBarInactiveTintColor: colors.textTertiary,
         tabBarStyle: {
-          backgroundColor: Colors.tabBar,
-          borderTopColor: Colors.tabBarBorder,
+          backgroundColor: colors.tabBar,
+          borderTopColor: colors.tabBarBorder,
           borderTopWidth: 1,
-          paddingTop: 8,
-          height: Platform.OS === 'ios' ? 84 : 64,
+          height: Platform.OS === 'ios' ? 84 : 60,
+          justifyContent: 'center',
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '500', marginBottom: Platform.OS === 'ios' ? 0 : 4 },
+        tabBarLabelStyle: {
+          fontSize: 14,
+          fontWeight: '600',
+          marginBottom: Platform.OS === 'ios' ? 0 : 4,
+        },
+        tabBarShowIcon: false,
+        tabBarItemStyle: {
+          maxWidth: 160,
+        },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'People',
-          tabBarIcon: ({ color, size }) => <TabIcon emoji="👥" color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Settings',
-          tabBarIcon: ({ color, size }) => <TabIcon emoji="⚙️" color={color} size={size} />,
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: 'People' }} />
+      <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
     </Tabs>
   );
-}
-
-function TabIcon({ emoji, color, size }: { emoji: string; color: string; size: number }) {
-  const { Text } = require('react-native');
-  return <Text style={{ fontSize: size - 4, color }}>{emoji}</Text>;
 }

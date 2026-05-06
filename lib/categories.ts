@@ -1,7 +1,6 @@
 export const CATEGORIES = [
+  'Family',
   'Best Friend',
   'Close Friend',
-  'Friend',
-  'Family',
   'Acquaintance',
 ];
