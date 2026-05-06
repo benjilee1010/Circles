@@ -140,6 +140,6 @@ function makeStyles(colors: ColorScheme) {
       width: 20, height: 20, alignItems: 'center', justifyContent: 'center',
       borderWidth: 1.5, borderColor: colors.background,
     },
-    editBadgeText: { fontSize: 10, color: '#fff' },
+    editBadgeText: { fontSize: 10, color: colors.background },
   });
 }
