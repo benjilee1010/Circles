@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  RefreshControl, SafeAreaView, Pressable, ScrollView,
+  RefreshControl, SafeAreaView, Pressable, ScrollView, TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -21,16 +21,23 @@ export default function PeopleScreen() {
   const { contacts, loading, refresh } = useContacts();
   const { allCategories, refresh: refreshCategories } = useCategories();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
 
   useFocusEffect(useCallback(() => {
     refresh();
     refreshCategories();
   }, []));
 
-  // Filter by selected category; null = show all
-  const filtered = selectedCategory
-    ? contacts.filter((c) => c.category === selectedCategory)
-    : contacts;
+  // Filter by category then by search query
+  const byCategory = selectedCategory === '__none__'
+    ? contacts.filter((c) => !c.category)
+    : selectedCategory
+      ? contacts.filter((c) => c.category === selectedCategory)
+      : contacts;
+
+  const filtered = query.trim()
+    ? byCategory.filter((c) => c.name.toLowerCase().includes(query.toLowerCase()))
+    : byCategory;
 
   const renderItem = useCallback(({ item }: { item: ContactWithMeta }) => (
     <ContactRow contact={item} onPress={() => router.push(`/contact/${item.id}`)} colors={colors} styles={styles} />
@@ -51,6 +58,21 @@ export default function PeopleScreen() {
       </View>
 
       <PageContainer>
+      {/* Search bar */}
+      {contacts.length > 0 && (
+        <View style={styles.searchWrap}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search"
+            placeholderTextColor={colors.textTertiary}
+            value={query}
+            onChangeText={setQuery}
+            clearButtonMode="while-editing"
+            autoCorrect={false}
+          />
+        </View>
+      )}
+
       {/* Category filter bar */}
       {contacts.length > 0 && (
         <ScrollView
@@ -109,9 +131,7 @@ export default function PeopleScreen() {
 
       {/* Contact list */}
       <FlatList
-        data={selectedCategory === '__none__'
-          ? contacts.filter((c) => !c.category)
-          : filtered}
+        data={filtered}
         keyExtractor={(c) => c.id}
         renderItem={renderItem}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={refresh} tintColor={colors.textTertiary} />}
@@ -126,6 +146,11 @@ export default function PeopleScreen() {
                 <TouchableOpacity style={styles.emptyBtn} onPress={() => router.push('/contact/add')}>
                   <Text style={styles.emptyBtnText}>Add someone</Text>
                 </TouchableOpacity>
+              </View>
+            ) : query.trim() ? (
+              <View style={styles.empty}>
+                <Text style={styles.emptyTitle}>No results</Text>
+                <Text style={styles.emptyBody}>Nobody matches "{query}".</Text>
               </View>
             ) : (
               <View style={styles.empty}>
@@ -197,6 +222,14 @@ function makeStyles(colors: ColorScheme) {
       paddingHorizontal: 4,
     },
     addBtnText: { color: colors.text, fontSize: 32, lineHeight: 36, fontWeight: '300' },
+
+    // Search
+    searchWrap: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
+    searchInput: {
+      backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+      borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
+      fontSize: 15, color: colors.text,
+    },
 
     // Filter bar
     filterBar: { flexGrow: 0, marginBottom: 4 },
