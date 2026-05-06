@@ -101,7 +101,7 @@ Deno.serve(async () => {
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; color: #1a1a1a;">
         <h1 style="font-size: 24px; font-weight: 700; margin: 0 0 6px;">Time to reach out 👋</h1>
         <p style="color: #666; font-size: 15px; margin: 0 0 28px;">
-          You have <strong>${overdue.length}</strong> overdue check-in${overdue.length !== 1 ? 's' : ''} today.
+          Here's your weekly roundup. You have <strong>${overdue.length}</strong> overdue check-in${overdue.length !== 1 ? 's' : ''} — a good week to reach out.
         </p>
 
         <table style="width: 100%; border-collapse: collapse;">
@@ -136,7 +136,7 @@ Deno.serve(async () => {
       body: JSON.stringify({
         from: FROM_EMAIL,
         to: email,
-        subject: `${overdue.length} person${overdue.length !== 1 ? 's' : ''} you should reach out to today`,
+        subject: `Your weekly Crcls check-in — ${overdue.length} person${overdue.length !== 1 ? 's' : ''} to reach out to`,
         html,
       }),
     });
