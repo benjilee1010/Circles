@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Alert, ActivityIndicator, SafeAreaView, KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { format, parseISO } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/context/ThemeContext';
@@ -21,7 +21,6 @@ type Tab = 'overview' | 'notes' | 'calendar';
 export default function ContactScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const navigation = useNavigation();
   const { session } = useAuth();
   const { colors } = useTheme();
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
@@ -33,9 +32,6 @@ export default function ContactScreen() {
     if (contact) setAvatarUrl(contact.avatar_url ?? null);
   }, [contact]);
 
-  React.useEffect(() => {
-    if (contact) navigation.setOptions({ title: contact.name });
-  }, [contact, navigation]);
 
   async function logHangout(date: string) {
     const existing = interactions.find((i) => i.date === date);
@@ -88,6 +84,12 @@ export default function ContactScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      {/* Custom back button — always visible, always says Back */}
+      <View style={styles.backRow}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Text style={styles.backText}>‹ Back</Text>
+        </TouchableOpacity>
+      </View>
       <PageContainer>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {/* Profile header */}
@@ -214,6 +216,9 @@ function InfoRow({
 function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
     safe: { flex: 1, backgroundColor: colors.background },
+    backRow: { paddingHorizontal: 16, paddingVertical: 10 },
+    backBtn: { alignSelf: 'flex-start', padding: 4 },
+    backText: { fontSize: 17, color: colors.text, fontWeight: '400' },
     profileHeader: {
       flexDirection: 'row', alignItems: 'center',
       paddingHorizontal: 20, paddingVertical: 16, gap: 14,

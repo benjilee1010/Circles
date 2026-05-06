@@ -34,14 +34,7 @@ function RootLayoutNav() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen
         name="contact/[id]"
-        options={{
-          headerShown: true,
-          headerBackTitle: '',
-          headerTintColor: colors.text,
-          headerStyle: { backgroundColor: colors.background },
-          headerShadowVisible: false,
-          title: '',
-        }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="contact/add"
