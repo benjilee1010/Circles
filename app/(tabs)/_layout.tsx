@@ -29,8 +29,8 @@ export default function TabsLayout() {
         },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'People' }} />
-      <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
+      <Tabs.Screen name="index" options={{ title: 'People', tabBarIcon: () => null }} />
+      <Tabs.Screen name="settings" options={{ title: 'Settings', tabBarIcon: () => null }} />
     </Tabs>
   );
 }

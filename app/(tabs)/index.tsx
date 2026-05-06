@@ -193,10 +193,10 @@ function makeStyles(colors: ColorScheme) {
     },
     title: { fontSize: 28, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
     addBtn: {
-      width: 36, height: 36, borderRadius: 18,
-      backgroundColor: colors.text, alignItems: 'center', justifyContent: 'center',
+      alignItems: 'center', justifyContent: 'center',
+      paddingHorizontal: 4,
     },
-    addBtnText: { color: '#fff', fontSize: 22, lineHeight: 28, fontWeight: '300' },
+    addBtnText: { color: colors.text, fontSize: 32, lineHeight: 36, fontWeight: '300' },
 
     // Filter bar
     filterBar: { flexGrow: 0, marginBottom: 4 },
