@@ -102,7 +102,7 @@ export default function AddContactScreen() {
 
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
           {saving
-            ? <ActivityIndicator color="#fff" />
+            ? <ActivityIndicator color={colors.background} />
             : <Text style={styles.saveBtnText}>Add to circles</Text>}
         </TouchableOpacity>
       </ScrollView>
@@ -126,6 +126,6 @@ function makeStyles(colors: ColorScheme) {
       backgroundColor: colors.text, borderRadius: 12,
       paddingVertical: 16, alignItems: 'center',
     },
-    saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+    saveBtnText: { color: colors.background, fontSize: 16, fontWeight: '600' },
   });
 }

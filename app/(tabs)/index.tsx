@@ -53,7 +53,7 @@ export default function PeopleScreen() {
       <View style={styles.header}>
         <View style={styles.titleRow}>
           <Text style={styles.title}>Crcls</Text>
-          <Text style={styles.version}>version 1.0.1  Made by Hoyeon Lee</Text>
+          <Text style={styles.version}>version 1.0.2  Made by Hoyeon Lee</Text>
         </View>
         <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/contact/add')}>
           <Text style={styles.addBtnText}>+</Text>
