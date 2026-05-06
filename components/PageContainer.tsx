@@ -8,15 +8,17 @@ interface Props {
 
 export function PageContainer({ children, style }: Props) {
   return (
-    <View style={styles.outer}>
-      <View style={[styles.inner, style]}>
-        {children}
-      </View>
+    <View style={[styles.container, style]}>
+      {children}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  outer: { flex: 1, alignItems: 'center' },
-  inner: { flex: 1, width: '100%', maxWidth: 680 },
+  container: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 680,
+    alignSelf: 'center',
+  },
 });
