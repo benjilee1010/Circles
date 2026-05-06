@@ -18,7 +18,7 @@ function RootLayoutNav() {
     if (loading) return;
     const inAuthGroup = segments[0] === '(auth)';
     if (!session && !inAuthGroup) {
-      router.replace('/(auth)/login');
+      router.replace('/(auth)/welcome');
     } else if (session && inAuthGroup) {
       router.replace('/(tabs)');
     } else if (session && Platform.OS !== 'web') {
@@ -31,6 +31,7 @@ function RootLayoutNav() {
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
       <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(auth)/welcome" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen
         name="contact/[id]"
