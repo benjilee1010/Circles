@@ -86,7 +86,7 @@ export default function ContactScreen() {
     <SafeAreaView style={styles.safe}>
       {/* Custom back button — always visible, always says Back */}
       <View style={styles.backRow}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} style={styles.backBtn}>
           <Text style={styles.backText}>‹ Back</Text>
         </TouchableOpacity>
       </View>
