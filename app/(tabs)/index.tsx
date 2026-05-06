@@ -276,6 +276,6 @@ function makeStyles(colors: ColorScheme) {
       marginTop: 24, backgroundColor: colors.text,
       paddingHorizontal: 24, paddingVertical: 14, borderRadius: 12,
     },
-    emptyBtnText: { color: '#fff', fontWeight: '600', fontSize: 15 },
+    emptyBtnText: { color: colors.background, fontWeight: '600', fontSize: 15 },
   });
 }
