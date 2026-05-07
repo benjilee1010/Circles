@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView,
-  Platform, ActivityIndicator, Alert,
+  Platform, ActivityIndicator,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -14,25 +14,34 @@ export default function SignupScreen() {
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleSignup() {
-    if (!email || !password) return;
+    setError('');
+    if (!email || !password || !confirm) {
+      setError('Please fill in all fields.');
+      return;
+    }
+    if (password !== confirm) {
+      setError('Passwords do not match.');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
     setLoading(true);
-    const redirectTo = Platform.OS === 'web' ? window.location.origin : undefined;
-    const { error } = await supabase.auth.signUp({
+    const { error: signUpError } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: { emailRedirectTo: redirectTo },
     });
     setLoading(false);
-    if (error) {
-      Alert.alert('Sign up failed', error.message);
-    } else {
-      Alert.alert('Check your email', 'We sent you a confirmation link.', [
-        { text: 'OK', onPress: () => router.replace('/(auth)/login') },
-      ]);
+    if (signUpError) {
+      setError(signUpError.message);
     }
+    // No redirect needed — AuthContext will detect the new session and navigate automatically
   }
 
   return (
@@ -64,9 +73,20 @@ export default function SignupScreen() {
             value={password}
             onChangeText={setPassword}
           />
+          <TextInput
+            style={styles.input}
+            placeholder="Confirm password"
+            placeholderTextColor={colors.textTertiary}
+            secureTextEntry
+            value={confirm}
+            onChangeText={setConfirm}
+          />
+
+          {!!error && <Text style={styles.errorText}>{error}</Text>}
+
           <TouchableOpacity style={styles.button} onPress={handleSignup} disabled={loading}>
             {loading
-              ? <ActivityIndicator color="#fff" />
+              ? <ActivityIndicator color={colors.background} />
               : <Text style={styles.buttonText}>Create account</Text>}
           </TouchableOpacity>
         </View>
@@ -100,6 +120,9 @@ function makeStyles(colors: ColorScheme) {
       paddingVertical: 14,
       fontSize: 16,
       color: colors.text,
+    },
+    errorText: {
+      fontSize: 13, color: colors.overdue, textAlign: 'center',
     },
     button: {
       backgroundColor: colors.text,
