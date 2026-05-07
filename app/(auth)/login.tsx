@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView,
-  Platform, ActivityIndicator, Alert,
+  Platform, ActivityIndicator, Alert, Pressable,
 } from 'react-native';
 import { Link } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -13,6 +13,7 @@ export default function LoginScreen() {
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleLogin() {
@@ -44,14 +45,19 @@ export default function LoginScreen() {
             value={email}
             onChangeText={setEmail}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            placeholderTextColor={colors.textTertiary}
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
+          <View style={styles.inputWrap}>
+            <TextInput
+              style={styles.inputInner}
+              placeholder="Password"
+              placeholderTextColor={colors.textTertiary}
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
+            />
+            <Pressable onPress={() => setShowPassword(v => !v)} style={styles.eyeBtn}>
+              <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁️'}</Text>
+            </Pressable>
+          </View>
           <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
             {loading
               ? <ActivityIndicator color="#fff" />
@@ -97,6 +103,17 @@ function makeStyles(colors: ColorScheme) {
       marginTop: 4,
     },
     buttonText: { color: colors.background, fontSize: 16, fontWeight: '600' },
+    inputWrap: {
+      flexDirection: 'row', alignItems: 'center',
+      backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+      borderRadius: 12, overflow: 'hidden',
+    },
+    inputInner: {
+      flex: 1, paddingHorizontal: 16, paddingVertical: 14,
+      fontSize: 16, color: colors.text,
+    },
+    eyeBtn: { paddingHorizontal: 14 },
+    eyeIcon: { fontSize: 16 },
     switchRow: { marginTop: 32, alignItems: 'center' },
     switchText: { fontSize: 14, color: colors.textSecondary },
     switchLink: { color: colors.text, fontWeight: '600' },

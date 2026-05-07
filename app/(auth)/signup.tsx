@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView,
-  Platform, ActivityIndicator,
+  Platform, ActivityIndicator, Pressable,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -15,6 +15,8 @@ export default function SignupScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -65,22 +67,32 @@ export default function SignupScreen() {
             value={email}
             onChangeText={setEmail}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            placeholderTextColor={colors.textTertiary}
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Confirm password"
-            placeholderTextColor={colors.textTertiary}
-            secureTextEntry
-            value={confirm}
-            onChangeText={setConfirm}
-          />
+          <View style={styles.inputWrap}>
+            <TextInput
+              style={styles.inputInner}
+              placeholder="Password"
+              placeholderTextColor={colors.textTertiary}
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
+            />
+            <Pressable onPress={() => setShowPassword(v => !v)} style={styles.eyeBtn}>
+              <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁️'}</Text>
+            </Pressable>
+          </View>
+          <View style={styles.inputWrap}>
+            <TextInput
+              style={styles.inputInner}
+              placeholder="Confirm password"
+              placeholderTextColor={colors.textTertiary}
+              secureTextEntry={!showConfirm}
+              value={confirm}
+              onChangeText={setConfirm}
+            />
+            <Pressable onPress={() => setShowConfirm(v => !v)} style={styles.eyeBtn}>
+              <Text style={styles.eyeIcon}>{showConfirm ? '🙈' : '👁️'}</Text>
+            </Pressable>
+          </View>
 
           {!!error && <Text style={styles.errorText}>{error}</Text>}
 
@@ -121,6 +133,17 @@ function makeStyles(colors: ColorScheme) {
       fontSize: 16,
       color: colors.text,
     },
+    inputWrap: {
+      flexDirection: 'row', alignItems: 'center',
+      backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+      borderRadius: 12, overflow: 'hidden',
+    },
+    inputInner: {
+      flex: 1, paddingHorizontal: 16, paddingVertical: 14,
+      fontSize: 16, color: colors.text,
+    },
+    eyeBtn: { paddingHorizontal: 14 },
+    eyeIcon: { fontSize: 16 },
     errorText: {
       fontSize: 13, color: colors.overdue, textAlign: 'center',
     },
