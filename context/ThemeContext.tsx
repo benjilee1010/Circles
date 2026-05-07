@@ -9,17 +9,18 @@ interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
-  isDark: false,
+  isDark: true,
   toggleTheme: () => {},
-  colors: lightColors,
+  colors: darkColors,
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
     AsyncStorage.getItem('theme').then((val) => {
-      if (val === 'dark') setIsDark(true);
+      if (val === 'light') setIsDark(false);
+      else if (val === null) setIsDark(true); // default dark for new users
     });
   }, []);
 
