@@ -105,7 +105,7 @@ function makeStyles(colors: ColorScheme) {
       paddingHorizontal: 14, paddingVertical: 10, marginBottom: 20,
     },
     disclaimerText: {
-      fontSize: 12, color: colors.textTertiary, textAlign: 'center', lineHeight: 18,
+      fontSize: 12, color: colors.textSecondary, textAlign: 'center', lineHeight: 18,
     },
     ctas: { gap: 12 },
     primaryBtn: {
