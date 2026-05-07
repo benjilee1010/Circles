@@ -52,6 +52,13 @@ export default function WelcomeScreen() {
           ))}
         </View>
 
+        {/* Notif disclaimer */}
+        <View style={styles.disclaimer}>
+          <Text style={styles.disclaimerText}>
+            📵 Email notifications are currently disabled — it costs money that I don't have 💀
+          </Text>
+        </View>
+
         {/* CTAs */}
         <View style={styles.ctas}>
           <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push('/(auth)/signup')}>
@@ -97,6 +104,13 @@ function makeStyles(colors: ColorScheme) {
       fontSize: 14, color: colors.textSecondary, lineHeight: 20,
     },
 
+    disclaimer: {
+      backgroundColor: colors.surfaceAlt, borderRadius: 10,
+      paddingHorizontal: 14, paddingVertical: 10, marginBottom: 20,
+    },
+    disclaimerText: {
+      fontSize: 12, color: colors.textTertiary, textAlign: 'center', lineHeight: 18,
+    },
     ctas: { gap: 12 },
     primaryBtn: {
       backgroundColor: colors.text, borderRadius: 12,
