@@ -77,7 +77,7 @@ export default function SignupScreen() {
               onChangeText={setPassword}
             />
             <Pressable onPress={() => setShowPassword(v => !v)} style={styles.eyeBtn}>
-              <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁️'}</Text>
+              <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '🐵'}</Text>
             </Pressable>
           </View>
           <View style={styles.inputWrap}>

@@ -55,7 +55,7 @@ export default function LoginScreen() {
               onChangeText={setPassword}
             />
             <Pressable onPress={() => setShowPassword(v => !v)} style={styles.eyeBtn}>
-              <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁️'}</Text>
+              <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '🐵'}</Text>
             </Pressable>
           </View>
           <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
