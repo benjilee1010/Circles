@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Alert, ActivityIndicator, Modal, Pressable,
+  TextInput, Alert, ActivityIndicator, Modal, Pressable, Platform,
 } from 'react-native';
 import { format, subDays, parseISO, isToday, isYesterday } from 'date-fns';
 import { supabase } from '@/lib/supabase';
@@ -191,6 +191,49 @@ function DatePickerModal({ visible, existingDates, onPick, onCancel, colors, sty
   );
 }
 
+// ─── Auto-growing TextInput ───────────────────────────────────────────────────
+
+function AutoGrowInput({
+  style,
+  minHeight = 70,
+  ...props
+}: React.ComponentProps<typeof TextInput> & { minHeight?: number }) {
+  const ref = React.useRef<any>(null);
+  const [nativeHeight, setNativeHeight] = useState(minHeight);
+
+  // Web: read the real DOM scrollHeight so the textarea grows past its box
+  function resizeWeb() {
+    if (Platform.OS !== 'web' || !ref.current) return;
+    const el = ref.current;
+    el.style.height = 'auto';
+    el.style.height = `${Math.max(el.scrollHeight, minHeight)}px`;
+  }
+
+  return (
+    <TextInput
+      {...props}
+      ref={ref}
+      multiline
+      scrollEnabled={false}
+      style={[
+        style,
+        Platform.OS !== 'web' ? { height: Math.max(nativeHeight, minHeight) } : { minHeight },
+      ]}
+      onLayout={resizeWeb}
+      onChangeText={(t) => {
+        props.onChangeText?.(t);
+        if (Platform.OS === 'web') setTimeout(resizeWeb, 0);
+      }}
+      onContentSizeChange={(e) => {
+        if (Platform.OS !== 'web') {
+          setNativeHeight(e.nativeEvent.contentSize.height);
+        }
+      }}
+      textAlignVertical="top"
+    />
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 interface Props {
@@ -348,14 +391,13 @@ export function NotesTab({ contactId, contactName, initialNotes }: Props) {
                 <Text style={styles.deleteX}>✕</Text>
               </TouchableOpacity>
             </View>
-            <TextInput
+            <AutoGrowInput
               style={styles.convoInput}
-              multiline
+              minHeight={90}
               placeholder="What did you talk about? Anything worth remembering…"
               placeholderTextColor={colors.textTertiary}
               value={entry.text}
               onChangeText={(t) => updateConvoText(entry.id, t)}
-              textAlignVertical="top"
             />
           </View>
         ))}
@@ -426,14 +468,13 @@ export function NotesTab({ contactId, contactName, initialNotes }: Props) {
               </TouchableOpacity>
             </View>
             <View style={styles.divider} />
-            <TextInput
+            <AutoGrowInput
               style={styles.profileInput}
-              multiline
+              minHeight={70}
               placeholder={placeholderFor(section.id)}
               placeholderTextColor={colors.textTertiary}
               value={section.content}
               onChangeText={(t) => updateSection(section.id, 'content', t)}
-              textAlignVertical="top"
             />
           </View>
         ))}
@@ -533,7 +574,7 @@ function makeStyles(colors: ColorScheme) {
     deleteX: { fontSize: 14, color: colors.textTertiary },
     convoInput: {
       fontSize: 15, lineHeight: 23, color: colors.text,
-      padding: 14, minHeight: 90,
+      padding: 14,
     },
 
     // Prompt chips
@@ -564,7 +605,7 @@ function makeStyles(colors: ColorScheme) {
     divider: { height: 1, backgroundColor: colors.border, marginHorizontal: 14, marginBottom: 2 },
     profileInput: {
       fontSize: 15, lineHeight: 23, color: colors.text,
-      padding: 14, paddingTop: 10, minHeight: 70,
+      padding: 14, paddingTop: 10,
     },
 
     // Date picker modal

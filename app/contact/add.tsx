@@ -4,6 +4,7 @@ import {
   ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { format, parseISO } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/context/ThemeContext';
 import { ColorScheme } from '@/lib/colors';
@@ -44,6 +45,20 @@ export default function AddContactScreen() {
     if (!user) { Alert.alert('Not signed in', 'Please sign out and sign back in.'); return; }
 
     const birthdayDate = parseDateInput(birthday);
+
+    // Pre-populate notes with a Birthday section if a birthday was entered
+    let initialNotes: string | null = null;
+    if (birthdayDate) {
+      const hasYear = birthday.trim().split('/').length >= 3;
+      const birthdayLabel = hasYear
+        ? format(parseISO(birthdayDate), 'MMMM d, yyyy')
+        : format(parseISO(birthdayDate), 'MMMM d');
+      initialNotes = JSON.stringify({
+        conversations: [],
+        sections: [{ id: 'birthday', label: 'Birthday', content: birthdayLabel }],
+      });
+    }
+
     setSaving(true);
     const { error } = await supabase.from('contacts').insert({
       user_id: user.id,
@@ -51,6 +66,7 @@ export default function AddContactScreen() {
       birthday: birthdayDate,
       reminder_frequency: frequency,
       category: category ?? null,
+      notes: initialNotes,
     });
     setSaving(false);
     if (error) {

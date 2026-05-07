@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView,
+  View, Text, StyleSheet, TouchableOpacity, ScrollView, Pressable, Alert, Platform,
 } from 'react-native';
 import { format, startOfWeek, addDays, addWeeks, isFuture, differenceInDays } from 'date-fns';
 import { useTheme } from '@/context/ThemeContext';
@@ -18,10 +18,12 @@ interface Props {
 }
 
 export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, contactName, lastContactedAt }: Props) {
-  const loggedDates = new Set([...hungOutDates, ...keptInTouchDates]);
   const { colors } = useTheme();
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const [weekOffset, setWeekOffset] = useState(0);
+  // web only: which date has the inline picker open
+  const [pendingDate, setPendingDate] = useState<string | null>(null);
+
   const today = new Date();
   const weekStart = addWeeks(startOfWeek(today, { weekStartsOn: 0 }), weekOffset);
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -38,6 +40,48 @@ export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, co
       else if (days === 1) lastSeenText = `It's been 1 day since you last saw ${contactName}.`;
       else                 lastSeenText = `It's been ${days} days since you last saw ${contactName}.`;
     }
+  }
+
+  function handleDayTap(dateStr: string) {
+    const isHungOut = hungOutDates.has(dateStr);
+    const isKeptInTouch = keptInTouchDates.has(dateStr);
+    const isLogged = isHungOut || isKeptInTouch;
+    const label = format(new Date(dateStr + 'T12:00:00'), 'MMMM d');
+
+    if (Platform.OS !== 'web') {
+      // Native: use Alert sheet
+      if (isLogged) {
+        const type = isHungOut ? 'hung_out' : 'kept_in_touch';
+        const typeLabel = isHungOut ? 'hangout' : 'check-in';
+        Alert.alert('Remove log', `Remove this ${typeLabel} on ${label}?`, [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Remove', style: 'destructive', onPress: () => onDayPress(dateStr, type) },
+        ]);
+      } else {
+        Alert.alert(label, 'How did you connect?', [
+          { text: 'Hung out', onPress: () => onDayPress(dateStr, 'hung_out') },
+          { text: 'Kept in touch', onPress: () => onDayPress(dateStr, 'kept_in_touch') },
+          { text: 'Cancel', style: 'cancel' },
+        ]);
+      }
+    } else {
+      // Web: toggle inline picker
+      setPendingDate(pendingDate === dateStr ? null : dateStr);
+    }
+  }
+
+  const pendingIsHungOut  = pendingDate ? hungOutDates.has(pendingDate) : false;
+  const pendingIsKeptInTouch = pendingDate ? keptInTouchDates.has(pendingDate) : false;
+  const pendingIsLogged   = pendingIsHungOut || pendingIsKeptInTouch;
+  const pendingLabel      = pendingDate ? format(new Date(pendingDate + 'T12:00:00'), 'MMMM d') : '';
+
+  function handleChoose(type: 'hung_out' | 'kept_in_touch') {
+    if (pendingDate) { onDayPress(pendingDate, type); setPendingDate(null); }
+  }
+  function handleRemove() {
+    if (!pendingDate) return;
+    onDayPress(pendingDate, pendingIsHungOut ? 'hung_out' : 'kept_in_touch');
+    setPendingDate(null);
   }
 
   return (
@@ -64,7 +108,38 @@ export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, co
         </TouchableOpacity>
       </View>
 
-      {/* Day headers — top section only */}
+      {/* Inline web picker — appears between nav and day grid */}
+      {Platform.OS === 'web' && pendingDate !== null && (
+        <View style={styles.pickerCard}>
+          <Text style={styles.pickerTitle}>{pendingLabel}</Text>
+          {pendingIsLogged ? (
+            <View style={styles.pickerRow}>
+              <TouchableOpacity style={[styles.pickerBtn, styles.pickerBtnDestructive]} onPress={handleRemove}>
+                <Text style={styles.pickerBtnDestructiveText}>
+                  Remove {pendingIsHungOut ? 'hung out' : 'kept in touch'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.pickerBtn, styles.pickerBtnCancel]} onPress={() => setPendingDate(null)}>
+                <Text style={styles.pickerBtnCancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.pickerRow}>
+              <TouchableOpacity style={[styles.pickerBtn, styles.pickerBtnGreen]} onPress={() => handleChoose('hung_out')}>
+                <Text style={styles.pickerBtnGreenText}>Hung out</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.pickerBtn, styles.pickerBtnDark]} onPress={() => handleChoose('kept_in_touch')}>
+                <Text style={styles.pickerBtnDarkText}>Kept in touch</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.pickerBtn, styles.pickerBtnCancel]} onPress={() => setPendingDate(null)}>
+                <Text style={styles.pickerBtnCancelText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* Day headers */}
       <View style={styles.dayHeaders}>
         {DAY_LABELS.map((d, i) => (
           <Text key={i} style={styles.dayHeader}>{d}</Text>
@@ -80,6 +155,7 @@ export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, co
           const isLogged = isHungOut || isKeptInTouch;
           const isToday = dateStr === format(today, 'yyyy-MM-dd');
           const future = isFuture(day) && !isToday;
+          const isPending = dateStr === pendingDate;
 
           return (
             <TouchableOpacity
@@ -89,12 +165,9 @@ export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, co
                 isHungOut && styles.dayCellHungOut,
                 isKeptInTouch && !isHungOut && styles.dayCellKeptInTouch,
                 isToday && !isLogged && styles.dayCellToday,
+                isPending && styles.dayCellPending,
               ]}
-              onPress={() => {
-                if (future) return;
-                if (isHungOut) onDayPress(dateStr, 'hung_out');
-                else onDayPress(dateStr, 'kept_in_touch');
-              }}
+              onPress={() => { if (!future) handleDayTap(dateStr); }}
               disabled={future}
             >
               <Text style={[
@@ -113,7 +186,6 @@ export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, co
       <ScrollView contentContainerStyle={styles.historyScroll} showsVerticalScrollIndicator={false}>
         <Text style={styles.historyLabel}>Past weeks</Text>
 
-        {/* Day-of-week column headers — shown once */}
         <View style={styles.historyRow}>
           <View style={{ width: 46 }} />
           <View style={styles.historyDots}>
@@ -129,26 +201,24 @@ export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, co
           return (
             <View key={wi} style={styles.historyRow}>
               <Text style={styles.historyWeek}>{format(wStart, 'MMM d')}</Text>
-              {/* flex:1 row so dots fill the remaining width evenly */}
               <View style={styles.historyDots}>
                 {days.map((d, di) => {
                   const ds = format(d, 'yyyy-MM-dd');
                   const isHungOut = hungOutDates.has(ds);
                   const isKeptInTouch = keptInTouchDates.has(ds);
                   const logged = isHungOut || isKeptInTouch;
+                  const isPending = ds === pendingDate;
                   return (
                     <TouchableOpacity
                       key={di}
                       style={styles.dotWrap}
-                      onPress={() => {
-                        if (isHungOut) onDayPress(ds, 'hung_out');
-                        else onDayPress(ds, 'kept_in_touch');
-                      }}
+                      onPress={() => handleDayTap(ds)}
                     >
                       <View style={[
                         styles.dot,
                         isHungOut && styles.dotHungOut,
                         isKeptInTouch && !isHungOut && styles.dotKeptInTouch,
+                        isPending && styles.dotPending,
                       ]}>
                         <Text style={[styles.dotNum, logged && styles.dotNumLogged]}>
                           {format(d, 'd')}
@@ -189,6 +259,28 @@ function makeStyles(colors: ColorScheme) {
     navArrowDisabled: { color: colors.textTertiary },
     weekLabel: { fontSize: 14, fontWeight: '600', color: colors.text },
 
+    // Inline picker card (web)
+    pickerCard: {
+      marginHorizontal: 16, marginBottom: 10,
+      backgroundColor: colors.surface,
+      borderRadius: 12, borderWidth: 1, borderColor: colors.border,
+      padding: 12, gap: 8,
+    },
+    pickerTitle: {
+      fontSize: 13, fontWeight: '600', color: colors.textSecondary,
+      textAlign: 'center',
+    },
+    pickerRow: { flexDirection: 'row', gap: 8 },
+    pickerBtn: { flex: 1, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
+    pickerBtnGreen: { backgroundColor: colors.ok },
+    pickerBtnGreenText: { fontSize: 14, fontWeight: '600', color: colors.background },
+    pickerBtnDark: { backgroundColor: colors.text },
+    pickerBtnDarkText: { fontSize: 14, fontWeight: '600', color: colors.background },
+    pickerBtnCancel: { backgroundColor: colors.surfaceAlt, flex: 0, paddingHorizontal: 14 },
+    pickerBtnCancelText: { fontSize: 14, fontWeight: '500', color: colors.textSecondary },
+    pickerBtnDestructive: { backgroundColor: colors.surfaceAlt },
+    pickerBtnDestructiveText: { fontSize: 14, fontWeight: '600', color: colors.overdue },
+
     dayHeaders: { flexDirection: 'row', paddingHorizontal: 16, marginBottom: 4 },
     dayHeader: {
       flex: 1, textAlign: 'center', fontSize: 12,
@@ -204,6 +296,7 @@ function makeStyles(colors: ColorScheme) {
     dayCellHungOut: { backgroundColor: colors.ok },
     dayCellKeptInTouch: { backgroundColor: colors.text },
     dayCellToday: { borderWidth: 1.5, borderColor: colors.text, backgroundColor: colors.surfaceAlt },
+    dayCellPending: { borderWidth: 2, borderColor: colors.accentDark },
     dayNum: { fontSize: 15, fontWeight: '500', color: colors.text },
     dayNumLogged: { color: colors.background, fontWeight: '700' },
     dayNumFuture: { color: colors.textTertiary },
@@ -213,11 +306,8 @@ function makeStyles(colors: ColorScheme) {
       fontSize: 12, fontWeight: '600', color: colors.textTertiary,
       letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 10,
     },
-    historyRow: {
-      flexDirection: 'row', alignItems: 'center', marginBottom: 8,
-    },
+    historyRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
     historyWeek: { fontSize: 11, color: colors.textSecondary, width: 46 },
-    // flex: 1 + each dotWrap flex: 1 → dots spread edge-to-edge
     historyDayHeader: {
       flex: 1, textAlign: 'center', fontSize: 10,
       fontWeight: '600', color: colors.textTertiary,
@@ -231,6 +321,7 @@ function makeStyles(colors: ColorScheme) {
     },
     dotHungOut: { backgroundColor: colors.ok },
     dotKeptInTouch: { backgroundColor: colors.text },
+    dotPending: { borderWidth: 2, borderColor: colors.accentDark },
     dotNum: { fontSize: 9, fontWeight: '500', color: colors.textSecondary },
     dotNumLogged: { color: colors.background, fontWeight: '700' },
   });
