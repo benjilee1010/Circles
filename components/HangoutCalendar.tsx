@@ -10,13 +10,15 @@ const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const NUM_WEEKS = 12;
 
 interface Props {
-  loggedDates: Set<string>;
-  onDayPress: (date: string) => void;
+  hungOutDates: Set<string>;
+  keptInTouchDates: Set<string>;
+  onDayPress: (date: string, type: 'hung_out' | 'kept_in_touch') => void;
   contactName?: string;
   lastContactedAt?: string | null;
 }
 
-export function HangoutCalendar({ loggedDates, onDayPress, contactName, lastContactedAt }: Props) {
+export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, contactName, lastContactedAt }: Props) {
+  const loggedDates = new Set([...hungOutDates, ...keptInTouchDates]);
   const { colors } = useTheme();
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const [weekOffset, setWeekOffset] = useState(0);
@@ -73,7 +75,9 @@ export function HangoutCalendar({ loggedDates, onDayPress, contactName, lastCont
       <View style={styles.dayRow}>
         {weekDays.map((day, i) => {
           const dateStr = format(day, 'yyyy-MM-dd');
-          const isLogged = loggedDates.has(dateStr);
+          const isHungOut = hungOutDates.has(dateStr);
+          const isKeptInTouch = keptInTouchDates.has(dateStr);
+          const isLogged = isHungOut || isKeptInTouch;
           const isToday = dateStr === format(today, 'yyyy-MM-dd');
           const future = isFuture(day) && !isToday;
 
@@ -82,10 +86,15 @@ export function HangoutCalendar({ loggedDates, onDayPress, contactName, lastCont
               key={i}
               style={[
                 styles.dayCell,
-                isLogged && styles.dayCellLogged,
+                isHungOut && styles.dayCellHungOut,
+                isKeptInTouch && !isHungOut && styles.dayCellKeptInTouch,
                 isToday && !isLogged && styles.dayCellToday,
               ]}
-              onPress={() => !future && onDayPress(dateStr)}
+              onPress={() => {
+                if (future) return;
+                if (isHungOut) onDayPress(dateStr, 'hung_out');
+                else onDayPress(dateStr, 'kept_in_touch');
+              }}
               disabled={future}
             >
               <Text style={[
@@ -124,10 +133,23 @@ export function HangoutCalendar({ loggedDates, onDayPress, contactName, lastCont
               <View style={styles.historyDots}>
                 {days.map((d, di) => {
                   const ds = format(d, 'yyyy-MM-dd');
-                  const logged = loggedDates.has(ds);
+                  const isHungOut = hungOutDates.has(ds);
+                  const isKeptInTouch = keptInTouchDates.has(ds);
+                  const logged = isHungOut || isKeptInTouch;
                   return (
-                    <TouchableOpacity key={di} style={styles.dotWrap} onPress={() => onDayPress(ds)}>
-                      <View style={[styles.dot, logged && styles.dotLogged]}>
+                    <TouchableOpacity
+                      key={di}
+                      style={styles.dotWrap}
+                      onPress={() => {
+                        if (isHungOut) onDayPress(ds, 'hung_out');
+                        else onDayPress(ds, 'kept_in_touch');
+                      }}
+                    >
+                      <View style={[
+                        styles.dot,
+                        isHungOut && styles.dotHungOut,
+                        isKeptInTouch && !isHungOut && styles.dotKeptInTouch,
+                      ]}>
                         <Text style={[styles.dotNum, logged && styles.dotNumLogged]}>
                           {format(d, 'd')}
                         </Text>
@@ -179,7 +201,8 @@ function makeStyles(colors: ColorScheme) {
       alignItems: 'center', justifyContent: 'center',
       backgroundColor: colors.surfaceAlt,
     },
-    dayCellLogged: { backgroundColor: colors.text },
+    dayCellHungOut: { backgroundColor: colors.ok },
+    dayCellKeptInTouch: { backgroundColor: colors.text },
     dayCellToday: { borderWidth: 1.5, borderColor: colors.text, backgroundColor: colors.surfaceAlt },
     dayNum: { fontSize: 15, fontWeight: '500', color: colors.text },
     dayNumLogged: { color: colors.background, fontWeight: '700' },
@@ -206,7 +229,8 @@ function makeStyles(colors: ColorScheme) {
       backgroundColor: colors.surfaceAlt,
       alignItems: 'center', justifyContent: 'center',
     },
-    dotLogged: { backgroundColor: colors.text },
+    dotHungOut: { backgroundColor: colors.ok },
+    dotKeptInTouch: { backgroundColor: colors.text },
     dotNum: { fontSize: 9, fontWeight: '500', color: colors.textSecondary },
     dotNumLogged: { color: colors.background, fontWeight: '700' },
   });

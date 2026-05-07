@@ -25,10 +25,13 @@ export interface ImportantDate {
   date: string;
 }
 
+export type InteractionType = 'hung_out' | 'kept_in_touch';
+
 export interface Interaction {
   id: string;
   contact_id: string;
   date: string;
+  type: InteractionType;
   note: string | null;
   created_at: string;
 }

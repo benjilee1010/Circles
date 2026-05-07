@@ -33,18 +33,19 @@ export default function ContactScreen() {
   }, [contact]);
 
 
-  async function logHangout(date: string) {
-    const existing = interactions.find((i) => i.date === date);
+  async function logInteraction(date: string, type: 'hung_out' | 'kept_in_touch') {
+    const existing = interactions.find((i) => i.date === date && i.type === type);
     if (existing) {
+      const label = type === 'hung_out' ? 'hangout' : 'check-in';
       if (Platform.OS === 'web') {
         // eslint-disable-next-line no-alert
-        const confirmed = window.confirm(`Remove the hangout on ${format(parseISO(date), 'MMM d')}?`);
+        const confirmed = window.confirm(`Remove this ${label} on ${format(parseISO(date), 'MMM d')}?`);
         if (confirmed) {
           await supabase.from('interactions').delete().eq('id', existing.id);
           refresh();
         }
       } else {
-        Alert.alert('Remove log', `Remove the hangout on ${format(parseISO(date), 'MMM d')}?`, [
+        Alert.alert('Remove log', `Remove this ${label} on ${format(parseISO(date), 'MMM d')}?`, [
           { text: 'Cancel', style: 'cancel' },
           {
             text: 'Remove', style: 'destructive', onPress: async () => {
@@ -55,7 +56,7 @@ export default function ContactScreen() {
         ]);
       }
     } else {
-      await supabase.from('interactions').insert({ contact_id: id, date });
+      await supabase.from('interactions').insert({ contact_id: id, date, type });
       refresh();
     }
   }
@@ -80,6 +81,8 @@ export default function ContactScreen() {
     );
   }
 
+  const hungOutDates = new Set(interactions.filter((i) => i.type === 'hung_out').map((i) => i.date));
+  const keptInTouchDates = new Set(interactions.filter((i) => i.type === 'kept_in_touch').map((i) => i.date));
   const loggedDates = new Set(interactions.map((i) => i.date));
 
   return (
@@ -138,15 +141,25 @@ export default function ContactScreen() {
               ))}
             </View>
 
-            {/* Log hangout today button */}
-            <TouchableOpacity
-              style={styles.logBtn}
-              onPress={() => logHangout(format(new Date(), 'yyyy-MM-dd'))}
-            >
-              <Text style={styles.logBtnText}>
-                {loggedDates.has(format(new Date(), 'yyyy-MM-dd')) ? '✓ Logged today' : 'Log hangout today'}
-              </Text>
-            </TouchableOpacity>
+            {/* Log buttons */}
+            <View style={styles.logRow}>
+              <TouchableOpacity
+                style={[styles.logBtn, styles.logBtnNeutral, keptInTouchDates.has(format(new Date(), 'yyyy-MM-dd')) && styles.logBtnNeutralActive]}
+                onPress={() => logInteraction(format(new Date(), 'yyyy-MM-dd'), 'kept_in_touch')}
+              >
+                <Text style={[styles.logBtnText, styles.logBtnNeutralText, keptInTouchDates.has(format(new Date(), 'yyyy-MM-dd')) && styles.logBtnNeutralTextActive]}>
+                  {keptInTouchDates.has(format(new Date(), 'yyyy-MM-dd')) ? '✓ Kept in touch' : 'Kept in touch'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.logBtn, styles.logBtnGreen, hungOutDates.has(format(new Date(), 'yyyy-MM-dd')) && styles.logBtnGreenActive]}
+                onPress={() => logInteraction(format(new Date(), 'yyyy-MM-dd'), 'hung_out')}
+              >
+                <Text style={[styles.logBtnText, styles.logBtnGreenText]}>
+                  {hungOutDates.has(format(new Date(), 'yyyy-MM-dd')) ? '✓ Hung out' : 'Hung out'}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             {/* Recent interactions */}
             {interactions.length > 0 && (
@@ -182,8 +195,9 @@ export default function ContactScreen() {
 
         {tab === 'calendar' && (
           <HangoutCalendar
-            loggedDates={loggedDates}
-            onDayPress={logHangout}
+            hungOutDates={hungOutDates}
+            keptInTouchDates={keptInTouchDates}
+            onDayPress={logInteraction}
             contactName={contact.name}
             lastContactedAt={contact.last_contacted_at}
           />
@@ -251,11 +265,16 @@ function makeStyles(colors: ColorScheme) {
     infoLabel: { fontSize: 15, color: colors.textSecondary },
     infoValue: { fontSize: 15, color: colors.text, fontWeight: '500' },
     infoSep: { height: 1, backgroundColor: colors.border, marginHorizontal: 16 },
-    logBtn: {
-      backgroundColor: colors.text, borderRadius: 12,
-      paddingVertical: 16, alignItems: 'center',
-    },
-    logBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+    logRow: { flexDirection: 'row', gap: 10 },
+    logBtn: { flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+    logBtnText: { fontSize: 14, fontWeight: '600' },
+    logBtnNeutral: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+    logBtnNeutralActive: { backgroundColor: colors.text, borderColor: colors.text },
+    logBtnNeutralText: { color: colors.textSecondary },
+    logBtnNeutralTextActive: { color: colors.background },
+    logBtnGreen: { backgroundColor: colors.okLight },
+    logBtnGreenActive: { backgroundColor: colors.ok },
+    logBtnGreenText: { color: colors.ok },
     sectionLabel: {
       fontSize: 12, fontWeight: '600', color: colors.textTertiary,
       letterSpacing: 0.8, textTransform: 'uppercase', marginTop: 4,
