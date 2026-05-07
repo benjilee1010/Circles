@@ -8,17 +8,14 @@ import { ColorScheme } from '@/lib/colors';
 
 const FEATURES = [
   {
-    emoji: '📅',
-    title: 'Log hangout dates',
-    body: 'Record every time you spend time with someone so you never lose track.',
+    title: 'Stay in touch',
+    body: 'Track when you last connected with the people who matter and make sure no one slips through the cracks.',
   },
   {
-    emoji: '📝',
-    title: 'Keep conversation notes',
-    body: 'Remember what you talked about, their interests, and the things that matter.',
+    title: 'Remember the people you love',
+    body: 'Keep notes on their interests, what you talked about, and the things that make them them.',
   },
   {
-    emoji: '🔔',
     title: 'Get reminded to reach out',
     body: 'Set a check-in frequency for each person and get notified when it\'s been too long.',
   },
@@ -43,7 +40,6 @@ export default function WelcomeScreen() {
         <View style={styles.features}>
           {FEATURES.map((f) => (
             <View key={f.title} style={styles.featureRow}>
-              <Text style={styles.featureEmoji}>{f.emoji}</Text>
               <View style={styles.featureMeta}>
                 <Text style={styles.featureTitle}>{f.title}</Text>
                 <Text style={styles.featureBody}>{f.body}</Text>
@@ -55,7 +51,7 @@ export default function WelcomeScreen() {
         {/* Notif disclaimer */}
         <View style={styles.disclaimer}>
           <Text style={styles.disclaimerText}>
-            📵 Email notifications are currently disabled — it costs money that I don't have 💀
+            Email notifications are currently disabled — it costs money that I don't have 💀
           </Text>
         </View>
 
