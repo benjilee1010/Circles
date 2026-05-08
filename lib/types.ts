@@ -1,5 +1,5 @@
 export type ReminderFrequency =
-  | 'weekly'
+  | 'weekly' | 'biweekly' | 'triweekly'
   | '1m' | '2m' | '3m' | '4m' | '5m' | '6m'
   | '7m' | '8m' | '9m' | '10m' | '11m' | '12m'
   | 'annually';

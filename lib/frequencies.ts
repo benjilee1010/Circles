@@ -2,6 +2,8 @@ import { ReminderFrequency } from './types';
 
 export const FREQUENCY_OPTIONS: { label: string; value: ReminderFrequency }[] = [
   { label: 'Weekly', value: 'weekly' },
+  { label: 'Bi-weekly', value: 'biweekly' },
+  { label: 'Tri-weekly', value: 'triweekly' },
   { label: 'Monthly', value: '1m' },
   { label: 'Every 2 months', value: '2m' },
   { label: 'Every 3 months', value: '3m' },
@@ -18,8 +20,10 @@ export const FREQUENCY_OPTIONS: { label: string; value: ReminderFrequency }[] = 
 ];
 
 export function frequencyToDays(freq: ReminderFrequency): number {
-  if (freq === 'weekly') return 7;
-  if (freq === 'annually') return 365;
+  if (freq === 'weekly')    return 7;
+  if (freq === 'biweekly')  return 14;
+  if (freq === 'triweekly') return 21;
+  if (freq === 'annually')  return 365;
   const months = parseInt(freq.replace('m', ''), 10);
   return months * 30;
 }
