@@ -158,8 +158,8 @@ export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, co
           const isToday = dateStr === format(today, 'yyyy-MM-dd');
           const future = isFuture(day) && !isToday;
           const isPending = dateStr === pendingDate;
-          // Show yellow on every unlogged day when contact is a regular
-          const isRegular = (isRegularHangout || isRegularCheckin) && !isLogged;
+          // Yellow only on today + future days — past days show only what was logged
+          const isRegular = (isRegularHangout || isRegularCheckin) && !isLogged && (isToday || future);
 
           return (
             <TouchableOpacity
@@ -213,7 +213,7 @@ export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, co
                   const isKeptInTouch = keptInTouchDates.has(ds);
                   const logged = isHungOut || isKeptInTouch;
                   const isPending = ds === pendingDate;
-                  const isRegular = (isRegularHangout || isRegularCheckin) && !logged;
+                  const isRegular = false; // history = past only, never yellow
                   return (
                     <TouchableOpacity
                       key={di}
