@@ -155,7 +155,6 @@ export default function PeopleScreen() {
         {/* Sort toggle */}
         {contacts.length > 0 && (
           <View style={styles.sortRow}>
-            <Text style={styles.sortLabel}>Sort</Text>
             <View style={styles.sortSegment}>
               {SORT_OPTIONS.map(({ mode, label }) => (
                 <TouchableOpacity
