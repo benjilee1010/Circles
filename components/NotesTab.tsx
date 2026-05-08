@@ -361,7 +361,15 @@ export function NotesTab({ contactId, userId, contactName, initialNotes }: Props
         {/* ── Conversation Notes ──────────────────────────────────────── */}
         <View style={styles.blockHeader}>
           <Text style={styles.blockTitle}>Conversation Notes</Text>
-          <TouchableOpacity style={styles.addBtn} onPress={() => setDatePickerMode('new')}>
+          <TouchableOpacity
+            style={styles.addBtn}
+            onPress={() => {
+              const today = toDateStr(new Date());
+              const entry: ConvoEntry = { id: uid(), date: today, text: '' };
+              const updated = [entry, ...data.conversations].sort((a, b) => b.date.localeCompare(a.date));
+              persist({ ...data, conversations: updated });
+            }}
+          >
             <Text style={styles.addBtnText}>+ New</Text>
           </TouchableOpacity>
         </View>
