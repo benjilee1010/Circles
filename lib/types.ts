@@ -16,6 +16,8 @@ export interface Contact {
   created_at: string;
   updated_at: string;
   last_contacted_at: string | null;
+  is_regular_hangout: boolean;
+  is_regular_checkin: boolean;
 }
 
 export interface ImportantDate {

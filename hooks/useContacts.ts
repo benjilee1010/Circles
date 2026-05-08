@@ -48,7 +48,10 @@ export function useContacts() {
         ? differenceInDays(now, parseISO(c.last_contacted_at))
         : null;
       const threshold = frequencyToDays(c.reminder_frequency);
-      const is_overdue = days === null ? true : days >= threshold;
+      // Regulars are never flagged as overdue — they're always in contact
+      const is_overdue = (c.is_regular_hangout || c.is_regular_checkin)
+        ? false
+        : days === null ? true : days >= threshold;
 
       const hoDate = lastHungOut.get(c.id) ?? null;
       const kitDate = lastKeptInTouch.get(c.id) ?? null;

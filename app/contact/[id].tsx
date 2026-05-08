@@ -28,10 +28,29 @@ export default function ContactScreen() {
   const { contact, importantDates, interactions, loading, error, refresh } = useContact(id);
   const [tab, setTab] = useState<Tab>('overview');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isRegularHangout, setIsRegularHangout] = useState(false);
+  const [isRegularCheckin, setIsRegularCheckin] = useState(false);
 
   React.useEffect(() => {
-    if (contact) setAvatarUrl(contact.avatar_url ?? null);
+    if (contact) {
+      setAvatarUrl(contact.avatar_url ?? null);
+      setIsRegularHangout(contact.is_regular_hangout ?? false);
+      setIsRegularCheckin(contact.is_regular_checkin ?? false);
+    }
   }, [contact]);
+
+  async function toggleRegular(type: 'hangout' | 'checkin') {
+    if (!contact) return;
+    if (type === 'hangout') {
+      const next = !isRegularHangout;
+      setIsRegularHangout(next);
+      await supabase.from('contacts').update({ is_regular_hangout: next }).eq('id', id).eq('user_id', contact.user_id);
+    } else {
+      const next = !isRegularCheckin;
+      setIsRegularCheckin(next);
+      await supabase.from('contacts').update({ is_regular_checkin: next }).eq('id', id).eq('user_id', contact.user_id);
+    }
+  }
 
 
   async function logInteraction(date: string, type: 'hung_out' | 'kept_in_touch') {
@@ -177,6 +196,29 @@ export default function ContactScreen() {
               </TouchableOpacity>
             </View>
 
+            {/* Regular toggles */}
+            <View style={styles.regularSection}>
+              <Text style={styles.regularLabel}>Always-on (skip overdue tracking)</Text>
+              <View style={styles.regularRow}>
+                <TouchableOpacity
+                  style={[styles.regularChip, isRegularCheckin && styles.regularChipActive]}
+                  onPress={() => toggleRegular('checkin')}
+                >
+                  <Text style={[styles.regularChipText, isRegularCheckin && styles.regularChipTextActive]}>
+                    {isRegularCheckin ? '★ Talk regularly' : '☆ Talk regularly'}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.regularChip, isRegularHangout && styles.regularChipActive]}
+                  onPress={() => toggleRegular('hangout')}
+                >
+                  <Text style={[styles.regularChipText, isRegularHangout && styles.regularChipTextActive]}>
+                    {isRegularHangout ? '★ See regularly' : '☆ See regularly'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
             {/* Recent interactions */}
             {interactions.length > 0 && (
               <>
@@ -293,6 +335,24 @@ function makeStyles(colors: ColorScheme) {
     logBtnGreenActive: { backgroundColor: colors.ok },
     logBtnGreenText: { color: colors.ok },
     logBtnGreenTextActive: { color: '#FFFFFF' },
+
+    // Regular toggles
+    regularSection: { gap: 6 },
+    regularLabel: {
+      fontSize: 11, fontWeight: '600', color: colors.textTertiary,
+      letterSpacing: 0.6, textTransform: 'uppercase',
+    },
+    regularRow: { flexDirection: 'row', gap: 10 },
+    regularChip: {
+      flex: 1, borderRadius: 12, paddingVertical: 10, alignItems: 'center',
+      borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface,
+    },
+    regularChipActive: {
+      backgroundColor: colors.dueSoonLight, borderColor: colors.dueSoon,
+    },
+    regularChipText: { fontSize: 13, fontWeight: '500', color: colors.textSecondary },
+    regularChipTextActive: { color: colors.dueSoon, fontWeight: '600' },
+
     sectionLabel: {
       fontSize: 12, fontWeight: '600', color: colors.textTertiary,
       letterSpacing: 0.8, textTransform: 'uppercase', marginTop: 4,

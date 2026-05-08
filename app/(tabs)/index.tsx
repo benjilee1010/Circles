@@ -246,10 +246,16 @@ function ContactRow({
     badgeMode === 'kept_in_touch' ? contact.days_since_kept_in_touch :
     contact.days_since_contact;
 
-  const daysLabel = days === null ? 'Never' : days === 0 ? 'Today' : `${days}d ago`;
-  const isOverdue  = badgeMode === 'any' ? contact.is_overdue : days === null;
-  const statusColor = isOverdue ? colors.overdue : colors.ok;
-  const statusBg    = isOverdue ? colors.overdueLight : colors.okLight;
+  // Is this contact a "regular" for the current badge mode?
+  const isRegular =
+    badgeMode === 'hung_out'      ? contact.is_regular_hangout :
+    badgeMode === 'kept_in_touch' ? contact.is_regular_checkin :
+    (contact.is_regular_hangout || contact.is_regular_checkin);
+
+  const daysLabel   = isRegular ? 'Regular' : days === null ? 'Never' : days === 0 ? 'Today' : `${days}d ago`;
+  const isOverdue   = !isRegular && (badgeMode === 'any' ? contact.is_overdue : days === null);
+  const statusColor = isRegular ? colors.dueSoon : isOverdue ? colors.overdue : colors.ok;
+  const statusBg    = isRegular ? colors.dueSoonLight : isOverdue ? colors.overdueLight : colors.okLight;
 
   const subtitle = contact.category
     ? `${contact.category} · ${frequencyLabel(contact.reminder_frequency)}`
