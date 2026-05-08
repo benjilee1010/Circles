@@ -136,6 +136,20 @@ function useWebStyles() {
       [tabindex="0"]:active {
         filter: brightness(0.7) !important;
       }
+
+      /* ── Input / textarea hover ── */
+      input,
+      textarea {
+        transition: filter 0.15s ease !important;
+      }
+      input:hover,
+      textarea:hover {
+        filter: brightness(1.25) !important;
+      }
+      input:focus,
+      textarea:focus {
+        filter: brightness(1.35) !important;
+      }
     `;
     document.head.appendChild(style);
     return () => { document.head.removeChild(style); };

@@ -37,7 +37,7 @@ export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, co
     if (!lastContactedAt) {
       lastSeenText = `You haven't logged any time with ${contactName} yet.`;
     } else {
-      const days = differenceInDays(today, new Date(lastContactedAt + 'T12:00:00'));
+      const days = differenceInDays(today, new Date(lastContactedAt.slice(0, 10) + 'T12:00:00'));
       if (days === 0)      lastSeenText = `You last saw ${contactName} today.`;
       else if (days === 1) lastSeenText = `It's been 1 day since you last saw ${contactName}.`;
       else                 lastSeenText = `It's been ${days} days since you last saw ${contactName}.`;
@@ -122,7 +122,7 @@ export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, co
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.pickerBtn, styles.pickerBtnCancel]} onPress={() => setPendingDate(null)}>
-                <Text style={styles.pickerBtnCancelText}>Cancel</Text>
+                <Text style={styles.pickerBtnCancelText}>✕</Text>
               </TouchableOpacity>
             </View>
           ) : (

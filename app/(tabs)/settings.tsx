@@ -44,7 +44,6 @@ export default function SettingsScreen() {
           <Text style={styles.brand}>Crcls</Text>
           <Text style={styles.brandVersion}>version 1.1.17  Made by Hoyeon Lee</Text>
         </View>
-        <Text style={styles.title}>Settings</Text>
       </View>
 
       <PageContainer>
@@ -62,7 +61,7 @@ export default function SettingsScreen() {
               value={isDark}
               onValueChange={toggleTheme}
               trackColor={{ false: colors.border, true: colors.text }}
-              thumbColor={colors.background}
+              thumbColor='#FFFFFF'
             />
           </View>
           <View style={styles.cardDivider} />
