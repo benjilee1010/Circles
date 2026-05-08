@@ -87,12 +87,13 @@ function RootLayoutNav() {
   );
 }
 
-// Inject a sleek custom scrollbar on web once at startup
-function useWebScrollbar() {
+// Inject global web styles (scrollbar + hover effects) once at startup
+function useWebStyles() {
   useEffect(() => {
     if (Platform.OS !== 'web') return;
     const style = document.createElement('style');
     style.textContent = `
+      /* ── Scrollbar ── */
       * {
         scrollbar-width: thin;
         scrollbar-color: rgba(128,128,128,0.25) transparent;
@@ -115,6 +116,18 @@ function useWebScrollbar() {
       ::-webkit-scrollbar-corner {
         background: transparent;
       }
+
+      /* ── Button hover highlights ── */
+      [role="button"] {
+        transition: opacity 0.12s ease;
+      }
+      [role="button"]:hover {
+        opacity: 0.72;
+        cursor: pointer;
+      }
+      [role="button"]:active {
+        opacity: 0.45;
+      }
     `;
     document.head.appendChild(style);
     return () => { document.head.removeChild(style); };
@@ -122,7 +135,7 @@ function useWebScrollbar() {
 }
 
 export default function RootLayout() {
-  useWebScrollbar();
+  useWebStyles();
   return (
     <ThemeProvider>
       <AuthProvider>
