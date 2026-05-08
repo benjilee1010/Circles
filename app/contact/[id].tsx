@@ -171,7 +171,7 @@ export default function ContactScreen() {
                 style={[styles.logBtn, styles.logBtnGreen, hungOutDates.has(format(new Date(), 'yyyy-MM-dd')) && styles.logBtnGreenActive]}
                 onPress={() => logInteraction(format(new Date(), 'yyyy-MM-dd'), 'hung_out')}
               >
-                <Text style={[styles.logBtnText, styles.logBtnGreenText]}>
+                <Text style={[styles.logBtnText, styles.logBtnGreenText, hungOutDates.has(format(new Date(), 'yyyy-MM-dd')) && styles.logBtnGreenTextActive]}>
                   {hungOutDates.has(format(new Date(), 'yyyy-MM-dd')) ? '✓ Hung out' : 'Hung out'}
                 </Text>
               </TouchableOpacity>
@@ -292,6 +292,7 @@ function makeStyles(colors: ColorScheme) {
     logBtnGreen: { backgroundColor: colors.okLight },
     logBtnGreenActive: { backgroundColor: colors.ok },
     logBtnGreenText: { color: colors.ok },
+    logBtnGreenTextActive: { color: '#FFFFFF' },
     sectionLabel: {
       fontSize: 12, fontWeight: '600', color: colors.textTertiary,
       letterSpacing: 0.8, textTransform: 'uppercase', marginTop: 4,
