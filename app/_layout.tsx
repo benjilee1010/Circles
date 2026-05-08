@@ -118,18 +118,23 @@ function useWebStyles() {
       }
 
       /* ── Button hover highlights ──
-         React Native Web sets opacity:1 as an inline style, which beats
-         stylesheet opacity rules. Use filter:brightness() instead —
-         it's a separate property so inline opacity never blocks it. */
-      [role="button"] {
-        transition: filter 0.12s ease !important;
+         RN Web sets opacity:1 inline, so we use filter:brightness()
+         which is a separate property and can't be blocked.
+         Target both role="button" and tabindex="0" since RN Web
+         applies both to interactive elements. */
+      [role="button"],
+      [tabindex="0"] {
+        filter: brightness(1) !important;
+        transition: filter 0.15s ease !important;
+      }
+      [role="button"]:hover,
+      [tabindex="0"]:hover {
+        filter: brightness(1.4) !important;
         cursor: pointer;
       }
-      [role="button"]:hover {
-        filter: brightness(1.18) !important;
-      }
-      [role="button"]:active {
-        filter: brightness(0.75) !important;
+      [role="button"]:active,
+      [tabindex="0"]:active {
+        filter: brightness(0.7) !important;
       }
     `;
     document.head.appendChild(style);
