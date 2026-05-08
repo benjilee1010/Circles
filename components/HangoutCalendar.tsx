@@ -194,7 +194,6 @@ export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, co
         <Text style={styles.historyLabel}>Past weeks</Text>
 
         <View style={styles.historyRow}>
-          <View style={{ width: 46 }} />
           <View style={styles.historyDots}>
             {DAY_LABELS.map((d, i) => (
               <Text key={i} style={styles.historyDayHeader}>{d}</Text>
@@ -207,7 +206,6 @@ export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, co
           const days = Array.from({ length: 7 }, (_, di) => addDays(wStart, di));
           return (
             <View key={wi} style={styles.historyRow}>
-              <Text style={styles.historyWeek}>{format(wStart, 'MMM d')}</Text>
               <View style={styles.historyDots}>
                 {days.map((d, di) => {
                   const ds = format(d, 'yyyy-MM-dd');
@@ -321,16 +319,15 @@ function makeStyles(colors: ColorScheme) {
       fontSize: 12, fontWeight: '600', color: colors.textTertiary,
       letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 10,
     },
-    historyRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-    historyWeek: { fontSize: 11, color: colors.textSecondary, width: 46 },
+    historyRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
     historyDayHeader: {
       flex: 1, textAlign: 'center', fontSize: 10,
-      fontWeight: '600', color: colors.textTertiary,
+      fontWeight: '600', color: colors.textTertiary, marginBottom: 4,
     },
     historyDots: { flex: 1, flexDirection: 'row' },
-    dotWrap: { flex: 1, alignItems: 'center', paddingVertical: 3 },
+    dotWrap: { flex: 1, alignItems: 'center', paddingVertical: 2 },
     dot: {
-      width: '80%' as any, aspectRatio: 1, borderRadius: 5,
+      width: '90%' as any, aspectRatio: 1, borderRadius: 8,
       backgroundColor: colors.surfaceAlt,
       alignItems: 'center', justifyContent: 'center',
     },
@@ -338,7 +335,7 @@ function makeStyles(colors: ColorScheme) {
     dotHungOut: { backgroundColor: colors.ok },
     dotKeptInTouch: { backgroundColor: colors.text },
     dotPending: { borderWidth: 2, borderColor: colors.accentDark },
-    dotNum: { fontSize: 9, fontWeight: '500', color: colors.textSecondary },
+    dotNum: { fontSize: 11, fontWeight: '500', color: colors.textSecondary },
     dotNumRegular: { color: '#1A1714', fontWeight: '700' },
     dotNumHungOut: { color: '#FFFFFF', fontWeight: '700' },
     dotNumKeptInTouch: { color: colors.background, fontWeight: '700' },
