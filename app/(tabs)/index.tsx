@@ -25,11 +25,6 @@ const BADGE_OPTIONS: { mode: BadgeMode; label: string }[] = [
   { mode: 'kept_in_touch', label: 'Kept in touch' },
 ];
 
-const SORT_OPTIONS: { mode: SortMode; label: string }[] = [
-  { mode: 'least_recent', label: 'Oldest' },
-  { mode: 'most_recent',  label: 'Recent' },
-  { mode: 'alphabetical', label: 'A – Z' },
-];
 
 export default function PeopleScreen() {
   const router = useRouter();
@@ -40,7 +35,7 @@ export default function PeopleScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [badgeMode, setBadgeMode] = useState<BadgeMode>('any');
-  const [sortMode, setSortMode] = useState<SortMode>('least_recent');
+  const [sortMode] = useState<SortMode>('most_recent');
 
   useFocusEffect(useCallback(() => {
     refresh();
@@ -152,24 +147,6 @@ export default function PeopleScreen() {
           </View>
         )}
 
-        {/* Sort toggle */}
-        {contacts.length > 0 && (
-          <View style={styles.sortRow}>
-            <View style={styles.sortSegment}>
-              {SORT_OPTIONS.map(({ mode, label }) => (
-                <TouchableOpacity
-                  key={mode}
-                  style={[styles.sortBtn, sortMode === mode && styles.sortBtnActive]}
-                  onPress={() => setSortMode(mode)}
-                >
-                  <Text style={[styles.sortBtnText, sortMode === mode && styles.sortBtnTextActive]}>
-                    {label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
 
         {/* Category filter chips */}
         {contacts.length > 0 && (
@@ -331,22 +308,7 @@ function makeStyles(colors: ColorScheme) {
     toggleBtnText: { fontSize: 12, fontWeight: '500', color: colors.textSecondary },
     toggleBtnTextActive: { color: colors.text, fontWeight: '600' },
 
-    // Sort row
-    sortRow: {
-      flexDirection: 'row', alignItems: 'center',
-      marginHorizontal: 16, marginTop: 4, marginBottom: 2, gap: 10,
-    },
-    sortLabel: { fontSize: 12, fontWeight: '600', color: colors.textTertiary, letterSpacing: 0.4 },
-    sortSegment: {
-      flex: 1, flexDirection: 'row',
-      backgroundColor: colors.surfaceAlt, borderRadius: 10, padding: 3,
-    },
-    sortBtn: { flex: 1, paddingVertical: 5, alignItems: 'center', borderRadius: 8 },
-    sortBtnActive: { backgroundColor: colors.surface, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } },
-    sortBtnText: { fontSize: 12, fontWeight: '500', color: colors.textSecondary },
-    sortBtnTextActive: { color: colors.text, fontWeight: '600' },
-
-    // Filter chips
+// Filter chips
     filterBar: { flexGrow: 0, marginBottom: 4 },
     filterBarContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8, gap: 8 },
     filterChip: {
