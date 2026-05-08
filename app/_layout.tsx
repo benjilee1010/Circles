@@ -117,16 +117,19 @@ function useWebStyles() {
         background: transparent;
       }
 
-      /* ── Button hover highlights ── */
+      /* ── Button hover highlights ──
+         React Native Web sets opacity:1 as an inline style, which beats
+         stylesheet opacity rules. Use filter:brightness() instead —
+         it's a separate property so inline opacity never blocks it. */
       [role="button"] {
-        transition: opacity 0.12s ease;
-      }
-      [role="button"]:hover {
-        opacity: 0.72;
+        transition: filter 0.12s ease !important;
         cursor: pointer;
       }
+      [role="button"]:hover {
+        filter: brightness(1.18) !important;
+      }
       [role="button"]:active {
-        opacity: 0.45;
+        filter: brightness(0.75) !important;
       }
     `;
     document.head.appendChild(style);
