@@ -358,6 +358,7 @@ function makeStyles(colors: ColorScheme) {
       flexDirection: 'row', alignItems: 'center',
       paddingHorizontal: 20, paddingVertical: 14,
       backgroundColor: colors.background,
+      borderRadius: 12, overflow: 'hidden',
     },
     rowPressed: { backgroundColor: colors.surfaceAlt },
     avatarWrap: { marginRight: 12 },
