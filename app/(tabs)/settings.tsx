@@ -39,7 +39,6 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <PageContainer>
       <View style={styles.header}>
         <View style={styles.brandRow}>
           <Text style={styles.brand}>Crcls</Text>
@@ -48,6 +47,7 @@ export default function SettingsScreen() {
         <Text style={styles.title}>Settings</Text>
       </View>
 
+      <PageContainer>
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>Account</Text>
         <View style={styles.card}>
