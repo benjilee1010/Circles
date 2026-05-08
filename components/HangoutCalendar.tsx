@@ -172,7 +172,8 @@ export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, co
             >
               <Text style={[
                 styles.dayNum,
-                isLogged && styles.dayNumLogged,
+                isHungOut && styles.dayNumHungOut,
+                isKeptInTouch && !isHungOut && styles.dayNumKeptInTouch,
                 future && styles.dayNumFuture,
               ]}>
                 {format(day, 'd')}
@@ -220,7 +221,7 @@ export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, co
                         isKeptInTouch && !isHungOut && styles.dotKeptInTouch,
                         isPending && styles.dotPending,
                       ]}>
-                        <Text style={[styles.dotNum, logged && styles.dotNumLogged]}>
+                        <Text style={[styles.dotNum, isHungOut && styles.dotNumHungOut, isKeptInTouch && !isHungOut && styles.dotNumKeptInTouch]}>
                           {format(d, 'd')}
                         </Text>
                       </View>
@@ -298,7 +299,10 @@ function makeStyles(colors: ColorScheme) {
     dayCellToday: { borderWidth: 1.5, borderColor: colors.text, backgroundColor: colors.surfaceAlt },
     dayCellPending: { borderWidth: 2, borderColor: colors.accentDark },
     dayNum: { fontSize: 15, fontWeight: '500', color: colors.text },
-    dayNumLogged: { color: colors.background, fontWeight: '700' },
+    // Hung out: white on green works in both light and dark mode
+    dayNumHungOut: { color: '#FFFFFF', fontWeight: '700' },
+    // Kept in touch: background color inverts correctly against colors.text cell
+    dayNumKeptInTouch: { color: colors.background, fontWeight: '700' },
     dayNumFuture: { color: colors.textTertiary },
 
     historyScroll: { paddingHorizontal: 16, paddingBottom: 32 },
@@ -323,6 +327,7 @@ function makeStyles(colors: ColorScheme) {
     dotKeptInTouch: { backgroundColor: colors.text },
     dotPending: { borderWidth: 2, borderColor: colors.accentDark },
     dotNum: { fontSize: 9, fontWeight: '500', color: colors.textSecondary },
-    dotNumLogged: { color: colors.background, fontWeight: '700' },
+    dotNumHungOut: { color: '#FFFFFF', fontWeight: '700' },
+    dotNumKeptInTouch: { color: colors.background, fontWeight: '700' },
   });
 }
