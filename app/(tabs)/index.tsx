@@ -272,6 +272,9 @@ function ContactRow({
       <View style={styles.rowMeta}>
         <Text style={styles.rowName}>{contact.name}</Text>
         <Text style={styles.rowSub} numberOfLines={1}>{subtitle}</Text>
+        {contact.birthday_soon && (
+          <Text style={styles.birthdayTag}>🎂 Birthday coming soon!</Text>
+        )}
       </View>
       <View style={[styles.badge, { backgroundColor: statusBg }]}>
         <Text style={[styles.badgeText, { color: statusColor }]}>{daysLabel}</Text>
@@ -363,6 +366,7 @@ function makeStyles(colors: ColorScheme) {
     rowSub: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
     badge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
     badgeText: { fontSize: 12, fontWeight: '600' },
+    birthdayTag: { fontSize: 12, color: colors.dueSoon, fontWeight: '600', marginTop: 3 },
     empty: { flex: 1, alignItems: 'center', paddingTop: 80, paddingHorizontal: 32 },
     emptyTitle: { fontSize: 20, fontWeight: '600', color: colors.text, marginBottom: 8 },
     emptyBody: { fontSize: 15, color: colors.textSecondary, textAlign: 'center', lineHeight: 22 },

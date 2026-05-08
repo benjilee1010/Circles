@@ -45,4 +45,5 @@ export type ContactWithMeta = Contact & {
   last_kept_in_touch_at: string | null;
   days_since_hung_out: number | null;
   days_since_kept_in_touch: number | null;
+  birthday_soon: boolean;
 };

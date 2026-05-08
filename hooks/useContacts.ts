@@ -4,6 +4,16 @@ import { Contact, ContactWithMeta } from '@/lib/types';
 import { frequencyToDays } from '@/lib/frequencies';
 import { differenceInDays, parseISO } from 'date-fns';
 
+function daysUntilBirthday(birthday: string | null, today: Date): number | null {
+  if (!birthday) return null;
+  const b = parseISO(birthday);
+  const thisYear = new Date(today.getFullYear(), b.getMonth(), b.getDate());
+  const diff = differenceInDays(thisYear, today);
+  if (diff >= 0) return diff;
+  const nextYear = new Date(today.getFullYear() + 1, b.getMonth(), b.getDate());
+  return differenceInDays(nextYear, today);
+}
+
 export function useContacts() {
   const [contacts, setContacts] = useState<ContactWithMeta[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +66,7 @@ export function useContacts() {
       const hoDate = lastHungOut.get(c.id) ?? null;
       const kitDate = lastKeptInTouch.get(c.id) ?? null;
 
+      const bdayDays = daysUntilBirthday(c.birthday, now);
       return {
         ...c,
         days_since_contact: days,
@@ -64,6 +75,7 @@ export function useContacts() {
         last_kept_in_touch_at: kitDate,
         days_since_hung_out: hoDate ? differenceInDays(now, parseISO(hoDate)) : null,
         days_since_kept_in_touch: kitDate ? differenceInDays(now, parseISO(kitDate)) : null,
+        birthday_soon: bdayDays !== null && bdayDays <= 7,
       };
     });
 

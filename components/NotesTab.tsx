@@ -3,7 +3,11 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Alert, ActivityIndicator, Modal, Pressable, Platform,
 } from 'react-native';
-import { format, subDays, parseISO, isToday, isYesterday } from 'date-fns';
+import {
+  format, parseISO, isToday, isYesterday,
+  startOfMonth, endOfMonth, startOfWeek, endOfWeek,
+  addDays, addMonths, subMonths, isSameMonth,
+} from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/context/ThemeContext';
 import { ColorScheme } from '@/lib/colors';
@@ -67,22 +71,6 @@ function toDateStr(d: Date): string {
   return format(d, 'yyyy-MM-dd');
 }
 
-function parseDateInput(val: string): string | null {
-  const cleaned = val.trim();
-  // Accept MM/DD or MM/DD/YYYY
-  const m = cleaned.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/);
-  if (!m) return null;
-  const month = m[1].padStart(2, '0');
-  const day   = m[2].padStart(2, '0');
-  const year  = m[3]
-    ? (m[3].length === 2 ? '20' + m[3] : m[3])
-    : new Date().getFullYear().toString();
-  const candidate = `${year}-${month}-${day}`;
-  // Validate it's a real date
-  const d = new Date(candidate + 'T12:00:00');
-  if (isNaN(d.getTime())) return null;
-  return candidate;
-}
 
 function friendlyDate(dateStr: string): string {
   const d = new Date(dateStr + 'T12:00:00');
@@ -102,35 +90,32 @@ interface DatePickerProps {
   styles: ReturnType<typeof makeStyles>;
 }
 
-function DatePickerModal({ visible, existingDates, onPick, onCancel, colors, styles }: DatePickerProps) {
-  const [customInput, setCustomInput] = useState('');
-  const [customError, setCustomError] = useState('');
-  const [showCustom, setShowCustom] = useState(false);
+const CAL_DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-  // Reset state when modal opens
+function DatePickerModal({ visible, existingDates, onPick, onCancel, colors, styles }: DatePickerProps) {
+  const today = new Date();
+  const todayStr = toDateStr(today);
+  const [viewMonth, setViewMonth] = useState(() => startOfMonth(today));
+
   useEffect(() => {
-    if (visible) {
-      setCustomInput('');
-      setCustomError('');
-      setShowCustom(false);
-    }
+    if (visible) setViewMonth(startOfMonth(new Date()));
   }, [visible]);
 
-  // Quick-pick: today + last 13 days = 14 options
-  const quickDays = Array.from({ length: 14 }, (_, i) => subDays(new Date(), i));
+  // Build a 6-row grid of weeks covering the viewed month
+  const monthStart = startOfMonth(viewMonth);
+  const monthEnd   = endOfMonth(viewMonth);
+  const gridStart  = startOfWeek(monthStart, { weekStartsOn: 0 });
+  const gridEnd    = endOfWeek(monthEnd, { weekStartsOn: 0 });
 
-  function handleQuickPick(d: Date) {
-    onPick(toDateStr(d));
+  const weeks: Date[][] = [];
+  let cursor = gridStart;
+  while (cursor <= gridEnd) {
+    const week: Date[] = [];
+    for (let i = 0; i < 7; i++) { week.push(cursor); cursor = addDays(cursor, 1); }
+    weeks.push(week);
   }
 
-  function handleCustomSubmit() {
-    const parsed = parseDateInput(customInput);
-    if (!parsed) {
-      setCustomError('Enter a date like 4/20 or 4/20/2024');
-      return;
-    }
-    onPick(parsed);
-  }
+  const canGoForward = !isSameMonth(viewMonth, today);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
@@ -138,49 +123,63 @@ function DatePickerModal({ visible, existingDates, onPick, onCancel, colors, sty
         <Pressable style={styles.modalSheet} onPress={(e) => e.stopPropagation()}>
           <Text style={styles.modalTitle}>When was this conversation?</Text>
 
-          {/* Quick date grid */}
-          <View style={styles.quickGrid}>
-            {quickDays.map((d) => {
-              const ds = toDateStr(d);
-              const already = existingDates.has(ds);
-              const label = isToday(d) ? 'Today' : isYesterday(d) ? 'Yesterday' : format(d, 'EEE, MMM d');
-              return (
-                <TouchableOpacity
-                  key={ds}
-                  style={[styles.quickChip, already && styles.quickChipUsed]}
-                  onPress={() => handleQuickPick(d)}
-                >
-                  <Text style={[styles.quickChipText, already && styles.quickChipTextUsed]}>
-                    {label}
-                  </Text>
-                  {already && <Text style={styles.quickChipDot}> ·</Text>}
-                </TouchableOpacity>
-              );
-            })}
+          {/* Month navigation */}
+          <View style={styles.calNav}>
+            <TouchableOpacity onPress={() => setViewMonth(subMonths(viewMonth, 1))} style={styles.calNavBtn}>
+              <Text style={styles.calNavArrow}>‹</Text>
+            </TouchableOpacity>
+            <Text style={styles.calMonthLabel}>{format(viewMonth, 'MMMM yyyy')}</Text>
+            <TouchableOpacity
+              onPress={() => { if (canGoForward) setViewMonth(addMonths(viewMonth, 1)); }}
+              style={styles.calNavBtn}
+              disabled={!canGoForward}
+            >
+              <Text style={[styles.calNavArrow, !canGoForward && styles.calNavArrowDisabled]}>›</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Custom date input */}
-          {!showCustom ? (
-            <TouchableOpacity style={styles.customToggle} onPress={() => setShowCustom(true)}>
-              <Text style={styles.customToggleText}>Pick a different date…</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.customRow}>
-              <TextInput
-                style={[styles.customInput, customError ? styles.customInputError : null]}
-                placeholder="MM/DD or MM/DD/YYYY"
-                placeholderTextColor={colors.textTertiary}
-                value={customInput}
-                onChangeText={(t) => { setCustomInput(t); setCustomError(''); }}
-                keyboardType="numbers-and-punctuation"
-                autoFocus
-              />
-              <TouchableOpacity style={styles.customGoBtn} onPress={handleCustomSubmit}>
-                <Text style={styles.customGoBtnText}>Add</Text>
-              </TouchableOpacity>
+          {/* Day-of-week headers */}
+          <View style={styles.calDayHeaders}>
+            {CAL_DAY_LABELS.map((d, i) => (
+              <Text key={i} style={styles.calDayHeader}>{d}</Text>
+            ))}
+          </View>
+
+          {/* Calendar grid */}
+          {weeks.map((week, wi) => (
+            <View key={wi} style={styles.calWeek}>
+              {week.map((day, di) => {
+                const ds = toDateStr(day);
+                const inMonth = isSameMonth(day, viewMonth);
+                const isToday_ = ds === todayStr;
+                const isFuture_ = ds > todayStr;
+                const hasNote  = existingDates.has(ds);
+                const disabled = !inMonth || isFuture_;
+                return (
+                  <TouchableOpacity
+                    key={di}
+                    style={[
+                      styles.calDay,
+                      isToday_ && styles.calDayToday,
+                      hasNote && styles.calDayHasNote,
+                      disabled && styles.calDayDisabled,
+                    ]}
+                    onPress={() => { if (!disabled) onPick(ds); }}
+                    disabled={disabled}
+                  >
+                    <Text style={[
+                      styles.calDayNum,
+                      isToday_ && styles.calDayNumToday,
+                      hasNote && styles.calDayNumHasNote,
+                      disabled && styles.calDayNumDisabled,
+                    ]}>
+                      {inMonth ? format(day, 'd') : ''}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
-          )}
-          {!!customError && <Text style={styles.customError}>{customError}</Text>}
+          ))}
 
           <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
             <Text style={styles.cancelBtnText}>Cancel</Text>
@@ -624,37 +623,39 @@ function makeStyles(colors: ColorScheme) {
     },
     modalSheet: {
       backgroundColor: colors.background, borderTopLeftRadius: 20, borderTopRightRadius: 20,
-      padding: 24, paddingBottom: 40,
+      padding: 20, paddingBottom: 36,
     },
     modalTitle: {
       fontSize: 17, fontWeight: '700', color: colors.text,
-      marginBottom: 18, textAlign: 'center',
+      marginBottom: 16, textAlign: 'center',
     },
-    quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-    quickChip: {
-      borderWidth: 1, borderColor: colors.border, borderRadius: 20,
-      paddingHorizontal: 14, paddingVertical: 8,
-      backgroundColor: colors.surface,
+    // Calendar
+    calNav: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      marginBottom: 12,
     },
-    quickChipUsed: { borderColor: colors.accentDark, backgroundColor: colors.surfaceAlt },
-    quickChipText: { fontSize: 14, color: colors.text },
-    quickChipTextUsed: { color: colors.accentDark },
-    quickChipDot: { fontSize: 14, color: colors.accentDark },
-    customToggle: { alignItems: 'center', paddingVertical: 10 },
-    customToggleText: { fontSize: 14, color: colors.textSecondary, textDecorationLine: 'underline' },
-    customRow: { flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 4 },
-    customInput: {
-      flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: 10,
-      paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: colors.text,
-      backgroundColor: colors.surface,
+    calNavBtn: { padding: 8 },
+    calNavArrow: { fontSize: 26, color: colors.text, fontWeight: '300' },
+    calNavArrowDisabled: { color: colors.textTertiary },
+    calMonthLabel: { fontSize: 15, fontWeight: '600', color: colors.text },
+    calDayHeaders: { flexDirection: 'row', marginBottom: 4 },
+    calDayHeader: {
+      flex: 1, textAlign: 'center', fontSize: 11,
+      fontWeight: '600', color: colors.textTertiary, letterSpacing: 0.4,
     },
-    customInputError: { borderColor: colors.overdue },
-    customGoBtn: {
-      backgroundColor: colors.text, borderRadius: 10,
-      paddingHorizontal: 18, paddingVertical: 11,
+    calWeek: { flexDirection: 'row', marginBottom: 4 },
+    calDay: {
+      flex: 1, aspectRatio: 1, borderRadius: 10, margin: 2,
+      alignItems: 'center', justifyContent: 'center',
+      backgroundColor: colors.surfaceAlt,
     },
-    customGoBtnText: { color: colors.background, fontWeight: '600', fontSize: 15 },
-    customError: { fontSize: 13, color: colors.overdue, marginBottom: 8, marginLeft: 2 },
+    calDayToday: { borderWidth: 1.5, borderColor: colors.text },
+    calDayHasNote: { backgroundColor: colors.text },
+    calDayDisabled: { backgroundColor: 'transparent' },
+    calDayNum: { fontSize: 14, fontWeight: '500', color: colors.text },
+    calDayNumToday: { fontWeight: '700' },
+    calDayNumHasNote: { color: colors.background, fontWeight: '700' },
+    calDayNumDisabled: { color: colors.textTertiary },
     cancelBtn: { alignItems: 'center', paddingVertical: 14 },
     cancelBtnText: { fontSize: 15, color: colors.textSecondary },
   });
