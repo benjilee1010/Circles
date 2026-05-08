@@ -14,6 +14,8 @@ import { frequencyLabel } from '@/lib/frequencies';
 import { ContactAvatar } from '@/components/ContactAvatar';
 import { PageContainer } from '@/components/PageContainer';
 
+type BadgeMode = 'any' | 'hung_out' | 'kept_in_touch';
+
 export default function PeopleScreen() {
   const router = useRouter();
   const { colors } = useTheme();
@@ -22,6 +24,7 @@ export default function PeopleScreen() {
   const { allCategories, refresh: refreshCategories } = useCategories();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const [badgeMode, setBadgeMode] = useState<BadgeMode>('any');
 
   useFocusEffect(useCallback(() => {
     refresh();
@@ -40,16 +43,28 @@ export default function PeopleScreen() {
     : byCategory;
 
   const renderItem = useCallback(({ item }: { item: ContactWithMeta }) => (
-    <ContactRow contact={item} onPress={() => router.push(`/contact/${item.id}`)} colors={colors} styles={styles} />
-  ), [router, colors, styles]);
+    <ContactRow
+      contact={item}
+      badgeMode={badgeMode}
+      onPress={() => router.push(`/contact/${item.id}`)}
+      colors={colors}
+      styles={styles}
+    />
+  ), [router, colors, styles, badgeMode]);
 
   // Count per category for the chips
   const countFor = (cat: string) => contacts.filter((c) => c.category === cat).length;
   const uncategorizedCount = contacts.filter((c) => !c.category).length;
 
+  const BADGE_OPTIONS: { mode: BadgeMode; label: string }[] = [
+    { mode: 'any',           label: 'Last contact' },
+    { mode: 'hung_out',      label: 'Hung out' },
+    { mode: 'kept_in_touch', label: 'Kept in touch' },
+  ];
+
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header — full width, always top-left */}
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
           <Text style={styles.title}>Crcls</Text>
@@ -61,129 +76,150 @@ export default function PeopleScreen() {
       </View>
 
       <PageContainer>
-      {/* Search bar */}
-      {contacts.length > 0 && (
-        <View style={styles.searchWrap}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search"
-            placeholderTextColor={colors.textTertiary}
-            value={query}
-            onChangeText={setQuery}
-            clearButtonMode="while-editing"
-            autoCorrect={false}
-          />
-        </View>
-      )}
+        {/* Search bar */}
+        {contacts.length > 0 && (
+          <View style={styles.searchWrap}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search"
+              placeholderTextColor={colors.textTertiary}
+              value={query}
+              onChangeText={setQuery}
+              clearButtonMode="while-editing"
+              autoCorrect={false}
+            />
+          </View>
+        )}
 
-      {/* Category filter bar */}
-      {contacts.length > 0 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.filterBar}
-          contentContainerStyle={styles.filterBarContent}
-        >
-          {/* All chip */}
-          <TouchableOpacity
-            style={[styles.filterChip, selectedCategory === null && styles.filterChipActive]}
-            onPress={() => setSelectedCategory(null)}
-          >
-            <Text style={[styles.filterChipText, selectedCategory === null && styles.filterChipTextActive]}>
-              All
-            </Text>
-            <Text style={[styles.filterChipCount, selectedCategory === null && styles.filterChipCountActive]}>
-              {contacts.length}
-            </Text>
-          </TouchableOpacity>
-
-          {/* One chip per category that has at least one person */}
-          {allCategories
-            .filter((cat) => countFor(cat) > 0)
-            .map((cat) => (
+        {/* Badge mode toggle */}
+        {contacts.length > 0 && (
+          <View style={styles.toggleRow}>
+            {BADGE_OPTIONS.map(({ mode, label }) => (
               <TouchableOpacity
-                key={cat}
-                style={[styles.filterChip, selectedCategory === cat && styles.filterChipActive]}
-                onPress={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+                key={mode}
+                style={[styles.toggleBtn, badgeMode === mode && styles.toggleBtnActive]}
+                onPress={() => setBadgeMode(mode)}
               >
-                <Text style={[styles.filterChipText, selectedCategory === cat && styles.filterChipTextActive]}>
-                  {cat}
-                </Text>
-                <Text style={[styles.filterChipCount, selectedCategory === cat && styles.filterChipCountActive]}>
-                  {countFor(cat)}
+                <Text style={[styles.toggleBtnText, badgeMode === mode && styles.toggleBtnTextActive]}>
+                  {label}
                 </Text>
               </TouchableOpacity>
             ))}
+          </View>
+        )}
 
-          {/* Uncategorized chip — only if there are some */}
-          {uncategorizedCount > 0 && (
+        {/* Category filter bar */}
+        {contacts.length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.filterBar}
+            contentContainerStyle={styles.filterBarContent}
+          >
             <TouchableOpacity
-              style={[styles.filterChip, selectedCategory === '__none__' && styles.filterChipActive]}
-              onPress={() => setSelectedCategory(selectedCategory === '__none__' ? null : '__none__')}
+              style={[styles.filterChip, selectedCategory === null && styles.filterChipActive]}
+              onPress={() => setSelectedCategory(null)}
             >
-              <Text style={[styles.filterChipText, selectedCategory === '__none__' && styles.filterChipTextActive]}>
-                Uncategorized
+              <Text style={[styles.filterChipText, selectedCategory === null && styles.filterChipTextActive]}>
+                All
               </Text>
-              <Text style={[styles.filterChipCount, selectedCategory === '__none__' && styles.filterChipCountActive]}>
-                {uncategorizedCount}
+              <Text style={[styles.filterChipCount, selectedCategory === null && styles.filterChipCountActive]}>
+                {contacts.length}
               </Text>
             </TouchableOpacity>
-          )}
-        </ScrollView>
-      )}
 
-      {/* Contact list */}
-      <FlatList
-        data={filtered}
-        keyExtractor={(c) => c.id}
-        renderItem={renderItem}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={refresh} tintColor={colors.textTertiary} />}
-        contentContainerStyle={styles.list}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        ListEmptyComponent={
-          !loading ? (
-            contacts.length === 0 ? (
-              <View style={styles.empty}>
-                <Text style={styles.emptyTitle}>Your circles are empty</Text>
-                <Text style={styles.emptyBody}>Add the people you want to stay close with.</Text>
-                <TouchableOpacity style={styles.emptyBtn} onPress={() => router.push('/contact/add')}>
-                  <Text style={styles.emptyBtnText}>Add someone</Text>
+            {allCategories
+              .filter((cat) => countFor(cat) > 0)
+              .map((cat) => (
+                <TouchableOpacity
+                  key={cat}
+                  style={[styles.filterChip, selectedCategory === cat && styles.filterChipActive]}
+                  onPress={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+                >
+                  <Text style={[styles.filterChipText, selectedCategory === cat && styles.filterChipTextActive]}>
+                    {cat}
+                  </Text>
+                  <Text style={[styles.filterChipCount, selectedCategory === cat && styles.filterChipCountActive]}>
+                    {countFor(cat)}
+                  </Text>
                 </TouchableOpacity>
-              </View>
-            ) : query.trim() ? (
-              <View style={styles.empty}>
-                <Text style={styles.emptyTitle}>No results</Text>
-                <Text style={styles.emptyBody}>Nobody matches "{query}".</Text>
-              </View>
-            ) : (
-              <View style={styles.empty}>
-                <Text style={styles.emptyTitle}>Nobody here</Text>
-                <Text style={styles.emptyBody}>No one in this category yet.</Text>
-              </View>
-            )
-          ) : null
-        }
-      />
+              ))}
+
+            {uncategorizedCount > 0 && (
+              <TouchableOpacity
+                style={[styles.filterChip, selectedCategory === '__none__' && styles.filterChipActive]}
+                onPress={() => setSelectedCategory(selectedCategory === '__none__' ? null : '__none__')}
+              >
+                <Text style={[styles.filterChipText, selectedCategory === '__none__' && styles.filterChipTextActive]}>
+                  Uncategorized
+                </Text>
+                <Text style={[styles.filterChipCount, selectedCategory === '__none__' && styles.filterChipCountActive]}>
+                  {uncategorizedCount}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </ScrollView>
+        )}
+
+        {/* Contact list */}
+        <FlatList
+          data={filtered}
+          keyExtractor={(c) => c.id}
+          renderItem={renderItem}
+          refreshControl={<RefreshControl refreshing={loading} onRefresh={refresh} tintColor={colors.textTertiary} />}
+          contentContainerStyle={styles.list}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          ListEmptyComponent={
+            !loading ? (
+              contacts.length === 0 ? (
+                <View style={styles.empty}>
+                  <Text style={styles.emptyTitle}>Your circles are empty</Text>
+                  <Text style={styles.emptyBody}>Add the people you want to stay close with.</Text>
+                  <TouchableOpacity style={styles.emptyBtn} onPress={() => router.push('/contact/add')}>
+                    <Text style={styles.emptyBtnText}>Add someone</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : query.trim() ? (
+                <View style={styles.empty}>
+                  <Text style={styles.emptyTitle}>No results</Text>
+                  <Text style={styles.emptyBody}>Nobody matches "{query}".</Text>
+                </View>
+              ) : (
+                <View style={styles.empty}>
+                  <Text style={styles.emptyTitle}>Nobody here</Text>
+                  <Text style={styles.emptyBody}>No one in this category yet.</Text>
+                </View>
+              )
+            ) : null
+          }
+        />
       </PageContainer>
     </SafeAreaView>
   );
 }
 
 function ContactRow({
-  contact, onPress, colors, styles,
+  contact, badgeMode, onPress, colors, styles,
 }: {
   contact: ContactWithMeta;
+  badgeMode: BadgeMode;
   onPress: () => void;
   colors: ColorScheme;
   styles: ReturnType<typeof makeStyles>;
 }) {
-  const statusColor = contact.is_overdue ? colors.overdue : colors.ok;
-  const statusBg = contact.is_overdue ? colors.overdueLight : colors.okLight;
-  const daysLabel = contact.days_since_contact === null
-    ? 'Never'
-    : contact.days_since_contact === 0
-      ? 'Today'
-      : `${contact.days_since_contact}d ago`;
+  const days =
+    badgeMode === 'hung_out'      ? contact.days_since_hung_out :
+    badgeMode === 'kept_in_touch' ? contact.days_since_kept_in_touch :
+    contact.days_since_contact;
+
+  const daysLabel = days === null ? 'Never'
+    : days === 0 ? 'Today'
+    : `${days}d ago`;
+
+  // Overdue colour only meaningful for "any" mode
+  const isOverdue = badgeMode === 'any' ? contact.is_overdue : days === null;
+  const statusColor = isOverdue ? colors.overdue : colors.ok;
+  const statusBg    = isOverdue ? colors.overdueLight : colors.okLight;
 
   const subtitle = contact.category
     ? `${contact.category} · ${frequencyLabel(contact.reminder_frequency)}`
@@ -222,10 +258,7 @@ function makeStyles(colors: ColorScheme) {
     titleRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
     title: { fontSize: 28, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
     version: { fontSize: 11, color: colors.textTertiary, fontWeight: '400' },
-    addBtn: {
-      alignItems: 'center', justifyContent: 'center',
-      paddingHorizontal: 4,
-    },
+    addBtn: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
     addBtnText: { color: colors.text, fontSize: 32, lineHeight: 36, fontWeight: '300' },
 
     // Search
@@ -235,6 +268,18 @@ function makeStyles(colors: ColorScheme) {
       borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
       fontSize: 15, color: colors.text,
     },
+
+    // Badge mode toggle
+    toggleRow: {
+      flexDirection: 'row', marginHorizontal: 16, marginVertical: 6,
+      backgroundColor: colors.surfaceAlt, borderRadius: 10, padding: 3,
+    },
+    toggleBtn: {
+      flex: 1, paddingVertical: 6, alignItems: 'center', borderRadius: 8,
+    },
+    toggleBtnActive: { backgroundColor: colors.surface, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } },
+    toggleBtnText: { fontSize: 12, fontWeight: '500', color: colors.textSecondary },
+    toggleBtnTextActive: { color: colors.text, fontWeight: '600' },
 
     // Filter bar
     filterBar: { flexGrow: 0, marginBottom: 4 },

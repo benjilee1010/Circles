@@ -39,4 +39,8 @@ export interface Interaction {
 export type ContactWithMeta = Contact & {
   days_since_contact: number | null;
   is_overdue: boolean;
+  last_hung_out_at: string | null;
+  last_kept_in_touch_at: string | null;
+  days_since_hung_out: number | null;
+  days_since_kept_in_touch: number | null;
 };
