@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Alert, SafeAreaView, ActivityIndicator, Switch, Platform,
+  View, Text, StyleSheet, TouchableOpacity, Alert, SafeAreaView, ActivityIndicator, Animated, Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -8,6 +8,35 @@ import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { ColorScheme } from '@/lib/colors';
 import { PageContainer } from '@/components/PageContainer';
+
+// Fully custom toggle — bypasses RN Web's Switch which ignores trackColor on web
+function MonoToggle({ value, onPress, colors }: { value: boolean; onPress: () => void; colors: ColorScheme }) {
+  const anim = React.useRef(new Animated.Value(value ? 1 : 0)).current;
+  React.useEffect(() => {
+    Animated.timing(anim, { toValue: value ? 1 : 0, duration: 180, useNativeDriver: true }).start();
+  }, [value]);
+  const tx = anim.interpolate({ inputRange: [0, 1], outputRange: [2, 22] });
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.85}
+      style={{
+        width: 51, height: 31, borderRadius: 16,
+        backgroundColor: value ? colors.text : colors.border,
+        justifyContent: 'center',
+      }}
+    >
+      <Animated.View style={{
+        width: 27, height: 27, borderRadius: 14,
+        backgroundColor: '#FFFFFF',
+        position: 'absolute',
+        transform: [{ translateX: tx }],
+        shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 3, shadowOffset: { width: 0, height: 1 },
+        elevation: 2,
+      }} />
+    </TouchableOpacity>
+  );
+}
 
 export default function SettingsScreen() {
   const { session } = useAuth();
@@ -57,12 +86,7 @@ export default function SettingsScreen() {
           <View style={styles.cardDivider} />
           <View style={styles.row}>
             <Text style={styles.rowLabel}>Dark mode</Text>
-            <Switch
-              value={isDark}
-              onValueChange={toggleTheme}
-              trackColor={{ false: colors.border, true: colors.text }}
-              thumbColor='#FFFFFF'
-            />
+            <MonoToggle value={isDark} onPress={toggleTheme} colors={colors} />
           </View>
           <View style={styles.cardDivider} />
           <TouchableOpacity style={styles.row} onPress={() => router.push('/settings/change-email')}>

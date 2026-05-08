@@ -126,15 +126,16 @@ function useWebStyles() {
       [tabindex="0"] {
         filter: brightness(1) !important;
         transition: filter 0.15s ease !important;
+        outline: none !important;
       }
       [role="button"]:hover,
       [tabindex="0"]:hover {
-        filter: brightness(1.4) !important;
+        filter: brightness(1.12) !important;
         cursor: pointer;
       }
       [role="button"]:active,
       [tabindex="0"]:active {
-        filter: brightness(0.7) !important;
+        filter: brightness(0.82) !important;
       }
 
       /* ── Input / textarea hover ── */

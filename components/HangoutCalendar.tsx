@@ -31,13 +31,18 @@ export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, co
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const weekLabel = format(weekStart, 'MMM d') + ' – ' + format(addDays(weekStart, 6), 'MMM d, yyyy');
 
-  // "Last seen" banner
+  // "Last seen" banner — prioritise hung_out over kept_in_touch
+  const lastHungOutDate = hungOutDates.size > 0
+    ? [...hungOutDates].sort().at(-1)!   // yyyy-MM-dd sorts correctly
+    : null;
+  const bannerDate = lastHungOutDate ?? (lastContactedAt ? lastContactedAt.slice(0, 10) : null);
+
   let lastSeenText: string | null = null;
   if (contactName) {
-    if (!lastContactedAt) {
+    if (!bannerDate) {
       lastSeenText = `You haven't logged any time with ${contactName} yet.`;
     } else {
-      const days = differenceInDays(today, new Date(lastContactedAt.slice(0, 10) + 'T12:00:00'));
+      const days = differenceInDays(today, new Date(bannerDate + 'T12:00:00'));
       if (days === 0)      lastSeenText = `You last saw ${contactName} today.`;
       else if (days === 1) lastSeenText = `It's been 1 day since you last saw ${contactName}.`;
       else                 lastSeenText = `It's been ${days} days since you last saw ${contactName}.`;

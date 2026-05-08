@@ -258,7 +258,7 @@ function ContactRow({
     : frequencyLabel(contact.reminder_frequency);
 
   return (
-    <Pressable style={({ pressed }) => [styles.row, pressed && styles.rowPressed]} onPress={onPress}>
+    <Pressable style={(state: any) => [styles.row, (state.pressed || state.hovered) && styles.rowPressed]} onPress={onPress}>
       <View style={styles.avatarWrap}>
         <ContactAvatar
           contactId={contact.id}
