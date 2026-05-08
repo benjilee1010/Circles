@@ -113,14 +113,15 @@ export default function ContactScreen() {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.backRow}>
-          <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} style={styles.backBtn}>
-            <Text style={styles.backText}>‹ Back</Text>
-          </TouchableOpacity>
           <View style={styles.backBrand}>
             <Text style={styles.backBrandTitle}>Crcls</Text>
             <Text style={styles.backBrandVersion}>version 1.1.17  Made by Hoyeon Lee</Text>
           </View>
+          <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} style={styles.backBtn}>
+            <Text style={styles.backText}>‹ Back</Text>
+          </TouchableOpacity>
         </View>
+
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{ color: colors.textSecondary }}>Contact not found.</Text>
         </View>
@@ -136,13 +137,13 @@ export default function ContactScreen() {
     <SafeAreaView style={styles.safe}>
       {/* Custom back button — always visible, always says Back */}
       <View style={styles.backRow}>
-        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} style={styles.backBtn}>
-          <Text style={styles.backText}>‹ Back</Text>
-        </TouchableOpacity>
         <View style={styles.backBrand}>
           <Text style={styles.backBrandTitle}>Crcls</Text>
           <Text style={styles.backBrandVersion}>version 1.1.17  Made by Hoyeon Lee</Text>
         </View>
+        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} style={styles.backBtn}>
+          <Text style={styles.backText}>‹ Back</Text>
+        </TouchableOpacity>
       </View>
       <PageContainer>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -214,7 +215,7 @@ export default function ContactScreen() {
 
             {/* Regular toggles */}
             <View style={styles.regularSection}>
-              <Text style={styles.regularLabel}>Always-on (skip overdue tracking)</Text>
+              <Text style={styles.regularLabel}>Regulars</Text>
               <View style={styles.regularRow}>
                 <TouchableOpacity
                   style={[styles.regularChip, isRegularCheckin && styles.regularChipActive]}
@@ -308,14 +309,14 @@ function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
     safe: { flex: 1, backgroundColor: colors.background },
     backRow: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      paddingHorizontal: 16, paddingVertical: 10,
+      flexDirection: 'column', alignItems: 'flex-start',
+      paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4,
     },
-    backBtn: { padding: 4 },
-    backText: { fontSize: 17, color: colors.text, fontWeight: '400' },
-    backBrand: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
+    backBrand: { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 4 },
     backBrandTitle: { fontSize: 20, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
     backBrandVersion: { fontSize: 10, color: colors.textTertiary, fontWeight: '400' },
+    backBtn: { padding: 4 },
+    backText: { fontSize: 17, color: colors.text, fontWeight: '400' },
     profileHeader: {
       flexDirection: 'row', alignItems: 'center',
       paddingHorizontal: 20, paddingVertical: 16, gap: 14,
