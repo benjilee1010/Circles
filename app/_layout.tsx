@@ -87,7 +87,42 @@ function RootLayoutNav() {
   );
 }
 
+// Inject a sleek custom scrollbar on web once at startup
+function useWebScrollbar() {
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const style = document.createElement('style');
+    style.textContent = `
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(128,128,128,0.25) transparent;
+      }
+      ::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(128,128,128,0.25);
+        border-radius: 99px;
+        transition: background 0.2s;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(128,128,128,0.5);
+      }
+      ::-webkit-scrollbar-corner {
+        background: transparent;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => { document.head.removeChild(style); };
+  }, []);
+}
+
 export default function RootLayout() {
+  useWebScrollbar();
   return (
     <ThemeProvider>
       <AuthProvider>
