@@ -61,8 +61,8 @@ export default function SettingsScreen() {
             <Switch
               value={isDark}
               onValueChange={toggleTheme}
-              trackColor={{ false: colors.border, true: colors.accentDark }}
-              thumbColor={colors.surface}
+              trackColor={{ false: colors.border, true: colors.text }}
+              thumbColor={colors.background}
             />
           </View>
           <View style={styles.cardDivider} />
