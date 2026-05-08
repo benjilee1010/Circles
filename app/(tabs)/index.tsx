@@ -113,7 +113,7 @@ export default function PeopleScreen() {
       <View style={styles.header}>
         <View style={styles.titleRow}>
           <Text style={styles.title}>Crcls</Text>
-          <Text style={styles.version}>version 1.1.8  Made by Hoyeon Lee</Text>
+          <Text style={styles.version}>version 1.1.17  Made by Hoyeon Lee</Text>
         </View>
         <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/contact/add')}>
           <Text style={styles.addBtnText}>+</Text>
@@ -348,11 +348,11 @@ function makeStyles(colors: ColorScheme) {
 
     // Filter chips
     filterBar: { flexGrow: 0, marginBottom: 4 },
-    filterBarContent: { paddingHorizontal: 16, paddingVertical: 6, gap: 8 },
+    filterBarContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8, gap: 8 },
     filterChip: {
       flexDirection: 'row', alignItems: 'center', gap: 5,
       borderWidth: 1, borderColor: colors.border, borderRadius: 20,
-      paddingHorizontal: 12, paddingVertical: 6, backgroundColor: colors.surface,
+      paddingHorizontal: 14, paddingVertical: 9, backgroundColor: colors.surface,
     },
     filterChipActive: { backgroundColor: colors.text, borderColor: colors.text },
     filterChipText: { fontSize: 13, fontWeight: '500', color: colors.text },
