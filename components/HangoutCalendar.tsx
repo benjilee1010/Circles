@@ -15,9 +15,11 @@ interface Props {
   onDayPress: (date: string, type: 'hung_out' | 'kept_in_touch') => void;
   contactName?: string;
   lastContactedAt?: string | null;
+  isRegularHangout?: boolean;
+  isRegularCheckin?: boolean;
 }
 
-export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, contactName, lastContactedAt }: Props) {
+export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, contactName, lastContactedAt, isRegularHangout = false, isRegularCheckin = false }: Props) {
   const { colors } = useTheme();
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const [weekOffset, setWeekOffset] = useState(0);
@@ -156,15 +158,18 @@ export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, co
           const isToday = dateStr === format(today, 'yyyy-MM-dd');
           const future = isFuture(day) && !isToday;
           const isPending = dateStr === pendingDate;
+          // Show yellow on every unlogged day when contact is a regular
+          const isRegular = (isRegularHangout || isRegularCheckin) && !isLogged;
 
           return (
             <TouchableOpacity
               key={i}
               style={[
                 styles.dayCell,
+                isRegular && styles.dayCellRegular,
                 isHungOut && styles.dayCellHungOut,
                 isKeptInTouch && !isHungOut && styles.dayCellKeptInTouch,
-                isToday && !isLogged && styles.dayCellToday,
+                isToday && !isLogged && !isRegular && styles.dayCellToday,
                 isPending && styles.dayCellPending,
               ]}
               onPress={() => { if (!future) handleDayTap(dateStr); }}
@@ -172,9 +177,10 @@ export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, co
             >
               <Text style={[
                 styles.dayNum,
+                isRegular && styles.dayNumRegular,
                 isHungOut && styles.dayNumHungOut,
                 isKeptInTouch && !isHungOut && styles.dayNumKeptInTouch,
-                future && styles.dayNumFuture,
+                future && !isRegular && styles.dayNumFuture,
               ]}>
                 {format(day, 'd')}
               </Text>
@@ -209,6 +215,7 @@ export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, co
                   const isKeptInTouch = keptInTouchDates.has(ds);
                   const logged = isHungOut || isKeptInTouch;
                   const isPending = ds === pendingDate;
+                  const isRegular = (isRegularHangout || isRegularCheckin) && !logged;
                   return (
                     <TouchableOpacity
                       key={di}
@@ -217,11 +224,12 @@ export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, co
                     >
                       <View style={[
                         styles.dot,
+                        isRegular && styles.dotRegular,
                         isHungOut && styles.dotHungOut,
                         isKeptInTouch && !isHungOut && styles.dotKeptInTouch,
                         isPending && styles.dotPending,
                       ]}>
-                        <Text style={[styles.dotNum, isHungOut && styles.dotNumHungOut, isKeptInTouch && !isHungOut && styles.dotNumKeptInTouch]}>
+                        <Text style={[styles.dotNum, isRegular && styles.dotNumRegular, isHungOut && styles.dotNumHungOut, isKeptInTouch && !isHungOut && styles.dotNumKeptInTouch]}>
                           {format(d, 'd')}
                         </Text>
                       </View>
@@ -294,11 +302,14 @@ function makeStyles(colors: ColorScheme) {
       alignItems: 'center', justifyContent: 'center',
       backgroundColor: colors.surfaceAlt,
     },
+    dayCellRegular: { backgroundColor: colors.dueSoon },
     dayCellHungOut: { backgroundColor: colors.ok },
     dayCellKeptInTouch: { backgroundColor: colors.text },
     dayCellToday: { borderWidth: 1.5, borderColor: colors.text, backgroundColor: colors.surfaceAlt },
     dayCellPending: { borderWidth: 2, borderColor: colors.accentDark },
     dayNum: { fontSize: 15, fontWeight: '500', color: colors.text },
+    // Regular: dark text on yellow for legibility in both themes
+    dayNumRegular: { color: '#1A1714', fontWeight: '700' },
     // Hung out: white on green works in both light and dark mode
     dayNumHungOut: { color: '#FFFFFF', fontWeight: '700' },
     // Kept in touch: background color inverts correctly against colors.text cell
@@ -323,10 +334,12 @@ function makeStyles(colors: ColorScheme) {
       backgroundColor: colors.surfaceAlt,
       alignItems: 'center', justifyContent: 'center',
     },
+    dotRegular: { backgroundColor: colors.dueSoon },
     dotHungOut: { backgroundColor: colors.ok },
     dotKeptInTouch: { backgroundColor: colors.text },
     dotPending: { borderWidth: 2, borderColor: colors.accentDark },
     dotNum: { fontSize: 9, fontWeight: '500', color: colors.textSecondary },
+    dotNumRegular: { color: '#1A1714', fontWeight: '700' },
     dotNumHungOut: { color: '#FFFFFF', fontWeight: '700' },
     dotNumKeptInTouch: { color: colors.background, fontWeight: '700' },
   });

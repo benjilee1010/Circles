@@ -275,6 +275,8 @@ export default function ContactScreen() {
             onDayPress={logInteraction}
             contactName={contact.name}
             lastContactedAt={contact.last_contacted_at}
+            isRegularHangout={isRegularHangout}
+            isRegularCheckin={isRegularCheckin}
           />
         )}
       </KeyboardAvoidingView>
