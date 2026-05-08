@@ -26,6 +26,10 @@ export default function SignupScreen() {
       setError('Please fill in all fields.');
       return;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError('Please enter a valid email address.');
+      return;
+    }
     if (password !== confirm) {
       setError('Passwords do not match.');
       return;

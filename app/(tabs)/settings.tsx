@@ -49,7 +49,7 @@ export default function SettingsScreen() {
         <View style={styles.card}>
           <View style={styles.row}>
             <Text style={styles.rowLabel}>Signed in as</Text>
-            <Text style={styles.rowValue} numberOfLines={1}>{session?.user?.email}</Text>
+            <Text style={styles.rowValue} numberOfLines={1}>{session?.user?.email ?? 'No email on file'}</Text>
           </View>
           <View style={styles.cardDivider} />
           <View style={styles.row}>

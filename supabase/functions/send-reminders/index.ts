@@ -6,6 +6,16 @@ const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? 'Crcls <onboarding@resend.dev>';
 const APP_URL = 'https://crcls.vercel.app';
 
+// HTML-escape user-supplied strings before injecting into email templates
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // Map frequency codes to days (mirrors lib/frequencies.ts)
 function frequencyToDays(freq: string): number {
   if (freq === 'weekly') return 7;
@@ -22,7 +32,18 @@ function friendlyFrequency(freq: string): string {
   return `every ${months} months`;
 }
 
-Deno.serve(async () => {
+const FUNCTION_SECRET = Deno.env.get('FUNCTION_SECRET');
+
+Deno.serve(async (req) => {
+  // Reject unauthenticated callers — only the scheduler (which supplies the
+  // shared secret) should be able to trigger this function.
+  if (FUNCTION_SECRET) {
+    const auth = req.headers.get('Authorization');
+    if (auth !== `Bearer ${FUNCTION_SECRET}`) {
+      return new Response('Unauthorized', { status: 401 });
+    }
+  }
+
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
   // Fetch all contacts
@@ -87,11 +108,11 @@ Deno.serve(async () => {
         return `
           <tr>
             <td style="padding: 10px 0; border-bottom: 1px solid #eee;">
-              <strong style="color: #1a1a1a;">${c.name}</strong>
-              <span style="color: #888; font-size: 13px; margin-left: 8px;">${since}</span>
+              <strong style="color: #1a1a1a;">${escapeHtml(c.name)}</strong>
+              <span style="color: #888; font-size: 13px; margin-left: 8px;">${escapeHtml(since)}</span>
             </td>
             <td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #888; font-size: 13px; text-align: right;">
-              ${friendlyFrequency(c.freq)}
+              ${escapeHtml(friendlyFrequency(c.freq))}
             </td>
           </tr>`;
       })

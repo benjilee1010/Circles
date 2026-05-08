@@ -4,7 +4,7 @@ import {
   ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/context/ThemeContext';
 import { ColorScheme } from '@/lib/colors';
@@ -16,7 +16,8 @@ import { Contact, ImportantDate, ReminderFrequency } from '@/lib/types';
 import { PageContainer } from '@/components/PageContainer';
 
 export default function EditContactScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{ id: string }>();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id ?? '';
   const router = useRouter();
   const { session } = useAuth();
   const { colors } = useTheme();
@@ -33,6 +34,7 @@ export default function EditContactScreen() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    if (!id) return;
     (async () => {
       const [{ data: c }, { data: d }] = await Promise.all([
         supabase.from('contacts').select('*').eq('id', id).single(),
@@ -62,59 +64,73 @@ export default function EditContactScreen() {
     const year = match[3]
       ? (match[3].length === 2 ? '20' + match[3] : match[3])
       : new Date().getFullYear().toString();
-    return `${year}-${month}-${day}`;
+    const candidate = `${year}-${month}-${day}`;
+    const d = new Date(candidate + 'T12:00:00');
+    if (!isValid(d)) return null;
+    return candidate;
   }
 
-  async function handleSave() {
-    if (!name.trim()) { Alert.alert('Name required'); return; }
-    setSaving(true);
-    const birthdayDate = parseDateInput(birthday);
-    const { error } = await supabase.from('contacts').update({
-      name: name.trim(),
-      birthday: birthdayDate,
-      reminder_frequency: frequency,
-    }).eq('id', id);
-    setSaving(false);
-    if (error) Alert.alert('Error', error.message);
-    else router.back();
+  // Safe formatter — avoids parseISO crash on partial/invalid strings
+  function safeDateDisplay(raw: string): string {
+    if (!raw.match(/^\d{4}-\d{2}-\d{2}$/)) return raw;
+    try {
+      const d = parseISO(raw);
+      return isValid(d) ? format(d, 'MM/dd') : raw;
+    } catch {
+      return raw;
+    }
   }
 
   function updateDate(idx: number, field: 'label' | 'date', val: string) {
     setImportantDates((prev) => prev.map((d, i) => i === idx ? { ...d, [field]: val } : d));
   }
 
-  async function saveImportantDates() {
-    // Upsert all dates
+  async function saveImportantDates(): Promise<string | null> {
     for (const d of importantDates) {
       const parsed = parseDateInput(d.date);
       if (!parsed || !d.label.trim()) continue;
       if (d.id.startsWith('new-')) {
-        await supabase.from('important_dates').insert({ contact_id: id, label: d.label, date: parsed });
+        const { error } = await supabase.from('important_dates').insert({ contact_id: id, label: d.label, date: parsed });
+        if (error) return error.message;
       } else {
-        await supabase.from('important_dates').update({ label: d.label, date: parsed }).eq('id', d.id);
+        const { error } = await supabase.from('important_dates').update({ label: d.label, date: parsed }).eq('id', d.id).eq('contact_id', id);
+        if (error) return error.message;
       }
     }
+    return null;
   }
 
   async function removeDate(idx: number) {
     const d = importantDates[idx];
     if (!d.id.startsWith('new-')) {
-      await supabase.from('important_dates').delete().eq('id', d.id);
+      await supabase.from('important_dates').delete().eq('id', d.id).eq('contact_id', id);
     }
     setImportantDates((prev) => prev.filter((_, i) => i !== idx));
   }
 
   async function handleSaveAll() {
     if (!name.trim()) { Alert.alert('Name required'); return; }
+    if (!contact) return;
     setSaving(true);
     const birthdayDate = parseDateInput(birthday);
-    const [{ error }] = await Promise.all([
-      supabase.from('contacts').update({ name: name.trim(), birthday: birthdayDate, reminder_frequency: frequency, category: category ?? null }).eq('id', id),
-      saveImportantDates(),
-    ]);
+    const userId = contact.user_id;
+
+    const { error: contactError } = await supabase
+      .from('contacts')
+      .update({ name: name.trim(), birthday: birthdayDate, reminder_frequency: frequency, category: category ?? null })
+      .eq('id', id)
+      .eq('user_id', userId);
+
+    if (contactError) {
+      setSaving(false);
+      Alert.alert('Error', contactError.message);
+      return;
+    }
+
+    const datesError = await saveImportantDates();
     setSaving(false);
-    if (error) Alert.alert('Error', error.message);
-    else router.back();
+    if (datesError) { Alert.alert('Error saving dates', datesError); return; }
+    router.back();
   }
 
   if (loading) return <ActivityIndicator style={{ flex: 1 }} color={colors.textTertiary} />;
@@ -129,7 +145,6 @@ export default function EditContactScreen() {
       <PageContainer>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.form}>
-          {/* Avatar */}
           <View style={styles.avatarRow}>
             <ContactAvatar
               contactId={id}
@@ -191,7 +206,7 @@ export default function EditContactScreen() {
                   style={[styles.input, styles.dateValueInput]}
                   placeholder="MM/DD"
                   placeholderTextColor={colors.textTertiary}
-                  value={d.date.includes('-') ? format(parseISO(d.date), 'MM/dd') : d.date}
+                  value={safeDateDisplay(d.date)}
                   onChangeText={(v) => updateDate(i, 'date', v)}
                   keyboardType="numbers-and-punctuation"
                 />

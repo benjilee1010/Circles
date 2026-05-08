@@ -1,5 +1,6 @@
 import 'react-native-url-polyfill/auto';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import React from 'react';
 import { Platform } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -13,7 +14,9 @@ function RootLayoutNav() {
   const { colors } = useTheme();
   const router = useRouter();
   const segments = useSegments();
+  const notificationsScheduled = useRef(false);
 
+  // Auth redirect
   useEffect(() => {
     if (loading) return;
     const inAuthGroup = segments[0] === '(auth)';
@@ -21,12 +24,18 @@ function RootLayoutNav() {
       router.replace('/(auth)/welcome');
     } else if (session && inAuthGroup) {
       router.replace('/(tabs)');
-    } else if (session && Platform.OS !== 'web') {
-      requestNotificationPermission().then((granted) => {
-        if (granted) scheduleContactReminders();
-      });
     }
   }, [session, loading, segments]);
+
+  // Schedule notifications once per session, not on every navigation
+  useEffect(() => {
+    if (!session || Platform.OS === 'web') return;
+    if (notificationsScheduled.current) return;
+    notificationsScheduled.current = true;
+    requestNotificationPermission().then((granted) => {
+      if (granted) scheduleContactReminders();
+    });
+  }, [session]);
 
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>

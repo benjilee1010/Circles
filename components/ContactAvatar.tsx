@@ -57,7 +57,9 @@ export function ContactAvatar({
       // Fetch the image as a blob
       const response = await fetch(asset.uri);
       const blob = await response.blob();
-      const ext = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpg';
+      const rawExt = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpg';
+      const allowedExts = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+      const ext = allowedExts.includes(rawExt) ? rawExt : 'jpg';
       const path = `${userId}/${contactId}.${ext}`;
 
       const { error: uploadError } = await supabase.storage

@@ -19,12 +19,13 @@ import { PageContainer } from '@/components/PageContainer';
 type Tab = 'overview' | 'notes' | 'calendar';
 
 export default function ContactScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{ id: string }>();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id ?? '';
   const router = useRouter();
   const { session } = useAuth();
   const { colors } = useTheme();
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
-  const { contact, importantDates, interactions, loading, refresh } = useContact(id);
+  const { contact, importantDates, interactions, loading, error, refresh } = useContact(id);
   const [tab, setTab] = useState<Tab>('overview');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
@@ -41,7 +42,7 @@ export default function ContactScreen() {
         // eslint-disable-next-line no-alert
         const confirmed = window.confirm(`Remove this ${label} on ${format(parseISO(date), 'MMM d')}?`);
         if (confirmed) {
-          await supabase.from('interactions').delete().eq('id', existing.id);
+          await supabase.from('interactions').delete().eq('id', existing.id).eq('contact_id', id);
           refresh();
         }
       } else {
@@ -49,7 +50,7 @@ export default function ContactScreen() {
           { text: 'Cancel', style: 'cancel' },
           {
             text: 'Remove', style: 'destructive', onPress: async () => {
-              await supabase.from('interactions').delete().eq('id', existing.id);
+              await supabase.from('interactions').delete().eq('id', existing.id).eq('contact_id', id);
               refresh();
             },
           },
@@ -66,17 +67,32 @@ export default function ContactScreen() {
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Remove', style: 'destructive', onPress: async () => {
-          await supabase.from('contacts').delete().eq('id', id);
+          await supabase.from('contacts').delete().eq('id', id).eq('user_id', contact.user_id);
           router.back();
         },
       },
     ]);
   }
 
-  if (loading || !contact) {
+  if (loading || (!contact && !error)) {
     return (
       <SafeAreaView style={styles.safe}>
         <ActivityIndicator style={{ flex: 1 }} color={colors.textTertiary} />
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !contact) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.backRow}>
+          <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} style={styles.backBtn}>
+            <Text style={styles.backText}>‹ Back</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ color: colors.textSecondary }}>Contact not found.</Text>
+        </View>
       </SafeAreaView>
     );
   }
@@ -188,6 +204,7 @@ export default function ContactScreen() {
         {tab === 'notes' && (
           <NotesTab
             contactId={id}
+            userId={session?.user?.id ?? ''}
             contactName={contact.name}
             initialNotes={contact.notes}
           />

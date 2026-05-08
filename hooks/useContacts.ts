@@ -13,9 +13,12 @@ export function useContacts() {
     setLoading(true);
     setError(null);
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
+
     const [{ data: contactData, error: contactErr }, { data: interactionData }] =
       await Promise.all([
-        supabase.from('contacts').select('*').order('name'),
+        supabase.from('contacts').select('*').eq('user_id', user.id).order('name'),
         supabase.from('interactions').select('contact_id, date, type'),
       ]);
 

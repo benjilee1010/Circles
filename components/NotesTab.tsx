@@ -238,11 +238,12 @@ function AutoGrowInput({
 
 interface Props {
   contactId: string;
+  userId: string;
   contactName: string;
   initialNotes: string | null;
 }
 
-export function NotesTab({ contactId, contactName, initialNotes }: Props) {
+export function NotesTab({ contactId, userId, contactName, initialNotes }: Props) {
   const { colors } = useTheme();
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const [data, setData] = useState<NotesData>(() => parseNotes(initialNotes));
@@ -263,7 +264,7 @@ export function NotesTab({ contactId, contactName, initialNotes }: Props) {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       setSaving(true);
-      await supabase.from('contacts').update({ notes: JSON.stringify(next) }).eq('id', contactId);
+      await supabase.from('contacts').update({ notes: JSON.stringify(next) }).eq('id', contactId).eq('user_id', userId);
       setSaving(false);
     }, 600);
   }
