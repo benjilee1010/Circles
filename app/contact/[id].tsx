@@ -116,6 +116,10 @@ export default function ContactScreen() {
           <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} style={styles.backBtn}>
             <Text style={styles.backText}>‹ Back</Text>
           </TouchableOpacity>
+          <View style={styles.backBrand}>
+            <Text style={styles.backBrandTitle}>Crcls</Text>
+            <Text style={styles.backBrandVersion}>version 1.1.17  Made by Hoyeon Lee</Text>
+          </View>
         </View>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{ color: colors.textSecondary }}>Contact not found.</Text>
@@ -135,6 +139,10 @@ export default function ContactScreen() {
         <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} style={styles.backBtn}>
           <Text style={styles.backText}>‹ Back</Text>
         </TouchableOpacity>
+        <View style={styles.backBrand}>
+          <Text style={styles.backBrandTitle}>Crcls</Text>
+          <Text style={styles.backBrandVersion}>version 1.1.17  Made by Hoyeon Lee</Text>
+        </View>
       </View>
       <PageContainer>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -297,9 +305,15 @@ function InfoRow({
 function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
     safe: { flex: 1, backgroundColor: colors.background },
-    backRow: { paddingHorizontal: 16, paddingVertical: 10 },
-    backBtn: { alignSelf: 'flex-start', padding: 4 },
+    backRow: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: 16, paddingVertical: 10,
+    },
+    backBtn: { padding: 4 },
     backText: { fontSize: 17, color: colors.text, fontWeight: '400' },
+    backBrand: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
+    backBrandTitle: { fontSize: 20, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
+    backBrandVersion: { fontSize: 10, color: colors.textTertiary, fontWeight: '400' },
     profileHeader: {
       flexDirection: 'row', alignItems: 'center',
       paddingHorizontal: 20, paddingVertical: 16, gap: 14,
