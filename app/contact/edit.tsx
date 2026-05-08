@@ -136,8 +136,12 @@ export default function EditContactScreen() {
   if (loading) return <ActivityIndicator style={{ flex: 1 }} color={colors.textTertiary} />;
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.backRow}>
+        <View style={styles.backBrand}>
+          <Text style={styles.backBrandTitle}>Crcls</Text>
+          <Text style={styles.backBrandVersion}>version 1.1.17  Made by Hoyeon Lee</Text>
+        </View>
         <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} style={styles.backBtn}>
           <Text style={styles.backText}>‹ Back</Text>
         </TouchableOpacity>
@@ -237,8 +241,15 @@ export default function EditContactScreen() {
 
 function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
-    backRow: { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: colors.background },
-    backBtn: { alignSelf: 'flex-start', padding: 4 },
+    backRow: {
+      flexDirection: 'column', alignItems: 'flex-start',
+      paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4,
+      backgroundColor: colors.background,
+    },
+    backBrand: { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 4 },
+    backBrandTitle: { fontSize: 28, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
+    backBrandVersion: { fontSize: 11, color: colors.textTertiary, fontWeight: '400' },
+    backBtn: { padding: 4 },
     backText: { fontSize: 17, color: colors.text, fontWeight: '400' },
     container: { padding: 20, gap: 24 },
     form: { gap: 16 },

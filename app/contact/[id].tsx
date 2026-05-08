@@ -313,8 +313,8 @@ function makeStyles(colors: ColorScheme) {
       paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4,
     },
     backBrand: { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 4 },
-    backBrandTitle: { fontSize: 20, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
-    backBrandVersion: { fontSize: 10, color: colors.textTertiary, fontWeight: '400' },
+    backBrandTitle: { fontSize: 28, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
+    backBrandVersion: { fontSize: 11, color: colors.textTertiary, fontWeight: '400' },
     backBtn: { padding: 4 },
     backText: { fontSize: 17, color: colors.text, fontWeight: '400' },
     profileHeader: {
