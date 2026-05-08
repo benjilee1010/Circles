@@ -82,15 +82,23 @@ export default function ContactScreen() {
   }
 
   async function handleDelete() {
-    Alert.alert('Remove person', `Remove ${contact?.name} from your circles?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove', style: 'destructive', onPress: async () => {
-          await supabase.from('contacts').delete().eq('id', id).eq('user_id', contact.user_id);
-          router.back();
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(`Remove ${contact?.name} from your circles?`);
+      if (confirmed) {
+        await supabase.from('contacts').delete().eq('id', id).eq('user_id', contact.user_id);
+        router.back();
+      }
+    } else {
+      Alert.alert('Remove person', `Remove ${contact?.name} from your circles?`, [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove', style: 'destructive', onPress: async () => {
+            await supabase.from('contacts').delete().eq('id', id).eq('user_id', contact.user_id);
+            router.back();
+          },
         },
-      },
-    ]);
+      ]);
+    }
   }
 
   if (loading || (!contact && !error)) {

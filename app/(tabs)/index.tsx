@@ -106,29 +106,25 @@ export default function PeopleScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Text style={styles.title}>Crcls</Text>
-          <Text style={styles.version}>version 1.1.17  Made by Hoyeon Lee</Text>
-        </View>
-        <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/contact/add')}>
-          <Text style={styles.addBtnText}>+</Text>
-        </TouchableOpacity>
+        <Text style={styles.title}>Crcls</Text>
+        <Text style={styles.version}>version 1.1.17  Made by Hoyeon Lee</Text>
       </View>
 
       <PageContainer>
-        {contacts.length > 0 && (
-          <View style={styles.searchWrap}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search"
-              placeholderTextColor={colors.textTertiary}
-              value={query}
-              onChangeText={setQuery}
-              clearButtonMode="while-editing"
-              autoCorrect={false}
-            />
-          </View>
-        )}
+        <View style={styles.searchRow}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search"
+            placeholderTextColor={colors.textTertiary}
+            value={query}
+            onChangeText={setQuery}
+            clearButtonMode="while-editing"
+            autoCorrect={false}
+          />
+          <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/contact/add')}>
+            <Text style={styles.addBtnText}>+</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Badge toggle */}
         {contacts.length > 0 && (
@@ -288,21 +284,28 @@ function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
     safe: { flex: 1, backgroundColor: colors.background },
     header: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      paddingHorizontal: 20, paddingVertical: 16,
+      flexDirection: 'row', alignItems: 'baseline', gap: 10,
+      paddingHorizontal: 20, paddingTop: 16, paddingBottom: 4,
     },
-    titleRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
     title: { fontSize: 28, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
     version: { fontSize: 11, color: colors.textTertiary, fontWeight: '400' },
-    addBtn: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
-    addBtnText: { color: colors.text, fontSize: 32, lineHeight: 36, fontWeight: '300' },
 
-    searchWrap: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
+    searchRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 10,
+      paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4,
+    },
     searchInput: {
+      flex: 1,
       backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
       borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
       fontSize: 15, color: colors.text,
     },
+    addBtn: {
+      width: 40, height: 40, borderRadius: 12,
+      backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    addBtnText: { color: colors.text, fontSize: 26, lineHeight: 30, fontWeight: '300' },
 
     // Badge toggle
     toggleRow: {
@@ -314,9 +317,10 @@ function makeStyles(colors: ColorScheme) {
     toggleBtnText: { fontSize: 12, fontWeight: '500', color: colors.textSecondary },
     toggleBtnTextActive: { color: colors.text, fontWeight: '600' },
 
-// Filter chips
-    filterBar: { flexGrow: 0, marginBottom: 4 },
-    filterBarContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8, gap: 8 },
+// Filter chips — vertical padding must live on the ScrollView, not
+    // contentContainerStyle, or React Native clips it on mobile.
+    filterBar: { flexGrow: 0, paddingTop: 10, paddingBottom: 10 },
+    filterBarContent: { paddingHorizontal: 16, gap: 8, alignItems: 'center' },
     filterChip: {
       flexDirection: 'row', alignItems: 'center', gap: 5,
       borderWidth: 1, borderColor: colors.border, borderRadius: 20,

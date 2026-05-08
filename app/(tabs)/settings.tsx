@@ -41,6 +41,10 @@ export default function SettingsScreen() {
     <SafeAreaView style={styles.safe}>
       <PageContainer>
       <View style={styles.header}>
+        <View style={styles.brandRow}>
+          <Text style={styles.brand}>Crcls</Text>
+          <Text style={styles.brandVersion}>version 1.1.17  Made by Hoyeon Lee</Text>
+        </View>
         <Text style={styles.title}>Settings</Text>
       </View>
 
@@ -93,8 +97,11 @@ export default function SettingsScreen() {
 function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
     safe: { flex: 1, backgroundColor: colors.background },
-    header: { paddingHorizontal: 20, paddingVertical: 16 },
-    title: { fontSize: 28, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
+    header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 4 },
+    brandRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10, marginBottom: 6 },
+    brand: { fontSize: 28, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
+    brandVersion: { fontSize: 11, color: colors.textTertiary, fontWeight: '400' },
+    title: { fontSize: 20, fontWeight: '600', color: colors.textSecondary, letterSpacing: -0.3 },
     section: { paddingHorizontal: 20, marginTop: 24 },
     sectionLabel: {
       fontSize: 12, fontWeight: '600', color: colors.textTertiary,
