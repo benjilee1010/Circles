@@ -1,6 +1,6 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity, StyleSheet,
+  View, Text, SectionList, TouchableOpacity, StyleSheet,
   RefreshControl, SafeAreaView, Pressable, ScrollView, TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -15,6 +15,21 @@ import { ContactAvatar } from '@/components/ContactAvatar';
 import { PageContainer } from '@/components/PageContainer';
 
 type BadgeMode = 'any' | 'hung_out' | 'kept_in_touch';
+type SortMode  = 'least_recent' | 'most_recent' | 'alphabetical';
+
+type Section = { title: string; data: ContactWithMeta[] };
+
+const BADGE_OPTIONS: { mode: BadgeMode; label: string }[] = [
+  { mode: 'any',           label: 'Last contact' },
+  { mode: 'hung_out',      label: 'Hung out' },
+  { mode: 'kept_in_touch', label: 'Kept in touch' },
+];
+
+const SORT_OPTIONS: { mode: SortMode; label: string }[] = [
+  { mode: 'least_recent', label: 'Oldest' },
+  { mode: 'most_recent',  label: 'Recent' },
+  { mode: 'alphabetical', label: 'A – Z' },
+];
 
 export default function PeopleScreen() {
   const router = useRouter();
@@ -25,22 +40,50 @@ export default function PeopleScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [badgeMode, setBadgeMode] = useState<BadgeMode>('any');
+  const [sortMode, setSortMode] = useState<SortMode>('least_recent');
 
   useFocusEffect(useCallback(() => {
     refresh();
     refreshCategories();
   }, []));
 
-  // Filter by category then by search query
-  const byCategory = selectedCategory === '__none__'
-    ? contacts.filter((c) => !c.category)
-    : selectedCategory
-      ? contacts.filter((c) => c.category === selectedCategory)
-      : contacts;
+  const countFor = (cat: string) => contacts.filter((c) => c.category === cat).length;
+  const uncategorizedCount = contacts.filter((c) => !c.category).length;
 
-  const filtered = query.trim()
-    ? byCategory.filter((c) => c.name.toLowerCase().includes(query.toLowerCase()))
-    : byCategory;
+  function sorted(list: ContactWithMeta[]): ContactWithMeta[] {
+    return [...list].sort((a, b) => {
+      if (sortMode === 'alphabetical') return a.name.localeCompare(b.name);
+      const aDays = a.days_since_contact ?? 9999;
+      const bDays = b.days_since_contact ?? 9999;
+      return sortMode === 'least_recent' ? bDays - aDays : aDays - bDays;
+    });
+  }
+
+  // Build grouped sections
+  const sections: Section[] = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const match = (c: ContactWithMeta) => !q || c.name.toLowerCase().includes(q);
+
+    // Single-category view — no grouping header needed
+    if (selectedCategory === '__none__') {
+      const data = sorted(contacts.filter((c) => !c.category && match(c)));
+      return data.length ? [{ title: '', data }] : [];
+    }
+    if (selectedCategory) {
+      const data = sorted(contacts.filter((c) => c.category === selectedCategory && match(c)));
+      return data.length ? [{ title: '', data }] : [];
+    }
+
+    // "All" view — group by category
+    const result: Section[] = [];
+    for (const cat of allCategories) {
+      const data = sorted(contacts.filter((c) => c.category === cat && match(c)));
+      if (data.length) result.push({ title: cat, data });
+    }
+    const uncat = sorted(contacts.filter((c) => !c.category && match(c)));
+    if (uncat.length) result.push({ title: 'Uncategorized', data: uncat });
+    return result;
+  }, [contacts, allCategories, selectedCategory, query, sortMode]);
 
   const renderItem = useCallback(({ item }: { item: ContactWithMeta }) => (
     <ContactRow
@@ -52,19 +95,21 @@ export default function PeopleScreen() {
     />
   ), [router, colors, styles, badgeMode]);
 
-  // Count per category for the chips
-  const countFor = (cat: string) => contacts.filter((c) => c.category === cat).length;
-  const uncategorizedCount = contacts.filter((c) => !c.category).length;
+  const renderSectionHeader = useCallback(({ section }: { section: Section }) => {
+    if (!section.title) return null;
+    return (
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>{section.title}</Text>
+        <View style={styles.sectionLine} />
+      </View>
+    );
+  }, [styles]);
 
-  const BADGE_OPTIONS: { mode: BadgeMode; label: string }[] = [
-    { mode: 'any',           label: 'Last contact' },
-    { mode: 'hung_out',      label: 'Hung out' },
-    { mode: 'kept_in_touch', label: 'Kept in touch' },
-  ];
+  const isEmpty = !loading && contacts.length > 0 && sections.length === 0;
+  const isFirstLoad = !loading && contacts.length === 0;
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
           <Text style={styles.title}>Crcls</Text>
@@ -76,7 +121,6 @@ export default function PeopleScreen() {
       </View>
 
       <PageContainer>
-        {/* Search bar */}
         {contacts.length > 0 && (
           <View style={styles.searchWrap}>
             <TextInput
@@ -91,7 +135,7 @@ export default function PeopleScreen() {
           </View>
         )}
 
-        {/* Badge mode toggle */}
+        {/* Badge toggle */}
         {contacts.length > 0 && (
           <View style={styles.toggleRow}>
             {BADGE_OPTIONS.map(({ mode, label }) => (
@@ -108,7 +152,27 @@ export default function PeopleScreen() {
           </View>
         )}
 
-        {/* Category filter bar */}
+        {/* Sort toggle */}
+        {contacts.length > 0 && (
+          <View style={styles.sortRow}>
+            <Text style={styles.sortLabel}>Sort</Text>
+            <View style={styles.sortSegment}>
+              {SORT_OPTIONS.map(({ mode, label }) => (
+                <TouchableOpacity
+                  key={mode}
+                  style={[styles.sortBtn, sortMode === mode && styles.sortBtnActive]}
+                  onPress={() => setSortMode(mode)}
+                >
+                  <Text style={[styles.sortBtnText, sortMode === mode && styles.sortBtnTextActive]}>
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Category filter chips */}
         {contacts.length > 0 && (
           <ScrollView
             horizontal
@@ -120,30 +184,24 @@ export default function PeopleScreen() {
               style={[styles.filterChip, selectedCategory === null && styles.filterChipActive]}
               onPress={() => setSelectedCategory(null)}
             >
-              <Text style={[styles.filterChipText, selectedCategory === null && styles.filterChipTextActive]}>
-                All
-              </Text>
+              <Text style={[styles.filterChipText, selectedCategory === null && styles.filterChipTextActive]}>All</Text>
               <Text style={[styles.filterChipCount, selectedCategory === null && styles.filterChipCountActive]}>
                 {contacts.length}
               </Text>
             </TouchableOpacity>
 
-            {allCategories
-              .filter((cat) => countFor(cat) > 0)
-              .map((cat) => (
-                <TouchableOpacity
-                  key={cat}
-                  style={[styles.filterChip, selectedCategory === cat && styles.filterChipActive]}
-                  onPress={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
-                >
-                  <Text style={[styles.filterChipText, selectedCategory === cat && styles.filterChipTextActive]}>
-                    {cat}
-                  </Text>
-                  <Text style={[styles.filterChipCount, selectedCategory === cat && styles.filterChipCountActive]}>
-                    {countFor(cat)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+            {allCategories.filter((cat) => countFor(cat) > 0).map((cat) => (
+              <TouchableOpacity
+                key={cat}
+                style={[styles.filterChip, selectedCategory === cat && styles.filterChipActive]}
+                onPress={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+              >
+                <Text style={[styles.filterChipText, selectedCategory === cat && styles.filterChipTextActive]}>{cat}</Text>
+                <Text style={[styles.filterChipCount, selectedCategory === cat && styles.filterChipCountActive]}>
+                  {countFor(cat)}
+                </Text>
+              </TouchableOpacity>
+            ))}
 
             {uncategorizedCount > 0 && (
               <TouchableOpacity
@@ -161,17 +219,20 @@ export default function PeopleScreen() {
           </ScrollView>
         )}
 
-        {/* Contact list */}
-        <FlatList
-          data={filtered}
+        {/* Grouped list */}
+        <SectionList
+          sections={sections}
           keyExtractor={(c) => c.id}
           renderItem={renderItem}
+          renderSectionHeader={renderSectionHeader}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={refresh} tintColor={colors.textTertiary} />}
           contentContainerStyle={styles.list}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
+          SectionSeparatorComponent={() => <View style={styles.sectionSep} />}
+          stickySectionHeadersEnabled={false}
           ListEmptyComponent={
             !loading ? (
-              contacts.length === 0 ? (
+              isFirstLoad ? (
                 <View style={styles.empty}>
                   <Text style={styles.emptyTitle}>Your circles are empty</Text>
                   <Text style={styles.emptyBody}>Add the people you want to stay close with.</Text>
@@ -179,17 +240,14 @@ export default function PeopleScreen() {
                     <Text style={styles.emptyBtnText}>Add someone</Text>
                   </TouchableOpacity>
                 </View>
-              ) : query.trim() ? (
+              ) : isEmpty ? (
                 <View style={styles.empty}>
                   <Text style={styles.emptyTitle}>No results</Text>
-                  <Text style={styles.emptyBody}>Nobody matches "{query}".</Text>
+                  <Text style={styles.emptyBody}>
+                    {query.trim() ? `Nobody matches "${query}".` : 'No one in this category yet.'}
+                  </Text>
                 </View>
-              ) : (
-                <View style={styles.empty}>
-                  <Text style={styles.emptyTitle}>Nobody here</Text>
-                  <Text style={styles.emptyBody}>No one in this category yet.</Text>
-                </View>
-              )
+              ) : null
             ) : null
           }
         />
@@ -212,12 +270,8 @@ function ContactRow({
     badgeMode === 'kept_in_touch' ? contact.days_since_kept_in_touch :
     contact.days_since_contact;
 
-  const daysLabel = days === null ? 'Never'
-    : days === 0 ? 'Today'
-    : `${days}d ago`;
-
-  // Overdue colour only meaningful for "any" mode
-  const isOverdue = badgeMode === 'any' ? contact.is_overdue : days === null;
+  const daysLabel = days === null ? 'Never' : days === 0 ? 'Today' : `${days}d ago`;
+  const isOverdue  = badgeMode === 'any' ? contact.is_overdue : days === null;
   const statusColor = isOverdue ? colors.overdue : colors.ok;
   const statusBg    = isOverdue ? colors.overdueLight : colors.okLight;
 
@@ -261,7 +315,6 @@ function makeStyles(colors: ColorScheme) {
     addBtn: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
     addBtnText: { color: colors.text, fontSize: 32, lineHeight: 36, fontWeight: '300' },
 
-    // Search
     searchWrap: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
     searchInput: {
       backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
@@ -269,26 +322,38 @@ function makeStyles(colors: ColorScheme) {
       fontSize: 15, color: colors.text,
     },
 
-    // Badge mode toggle
+    // Badge toggle
     toggleRow: {
-      flexDirection: 'row', marginHorizontal: 16, marginVertical: 6,
+      flexDirection: 'row', marginHorizontal: 16, marginTop: 6, marginBottom: 4,
       backgroundColor: colors.surfaceAlt, borderRadius: 10, padding: 3,
     },
-    toggleBtn: {
-      flex: 1, paddingVertical: 6, alignItems: 'center', borderRadius: 8,
-    },
+    toggleBtn: { flex: 1, paddingVertical: 6, alignItems: 'center', borderRadius: 8 },
     toggleBtnActive: { backgroundColor: colors.surface, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } },
     toggleBtnText: { fontSize: 12, fontWeight: '500', color: colors.textSecondary },
     toggleBtnTextActive: { color: colors.text, fontWeight: '600' },
 
-    // Filter bar
+    // Sort row
+    sortRow: {
+      flexDirection: 'row', alignItems: 'center',
+      marginHorizontal: 16, marginTop: 4, marginBottom: 2, gap: 10,
+    },
+    sortLabel: { fontSize: 12, fontWeight: '600', color: colors.textTertiary, letterSpacing: 0.4 },
+    sortSegment: {
+      flex: 1, flexDirection: 'row',
+      backgroundColor: colors.surfaceAlt, borderRadius: 10, padding: 3,
+    },
+    sortBtn: { flex: 1, paddingVertical: 5, alignItems: 'center', borderRadius: 8 },
+    sortBtnActive: { backgroundColor: colors.surface, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } },
+    sortBtnText: { fontSize: 12, fontWeight: '500', color: colors.textSecondary },
+    sortBtnTextActive: { color: colors.text, fontWeight: '600' },
+
+    // Filter chips
     filterBar: { flexGrow: 0, marginBottom: 4 },
     filterBarContent: { paddingHorizontal: 16, paddingVertical: 6, gap: 8 },
     filterChip: {
       flexDirection: 'row', alignItems: 'center', gap: 5,
       borderWidth: 1, borderColor: colors.border, borderRadius: 20,
-      paddingHorizontal: 12, paddingVertical: 6,
-      backgroundColor: colors.surface,
+      paddingHorizontal: 12, paddingVertical: 6, backgroundColor: colors.surface,
     },
     filterChipActive: { backgroundColor: colors.text, borderColor: colors.text },
     filterChipText: { fontSize: 13, fontWeight: '500', color: colors.text },
@@ -299,6 +364,19 @@ function makeStyles(colors: ColorScheme) {
       paddingHorizontal: 5, paddingVertical: 1, overflow: 'hidden',
     },
     filterChipCountActive: { color: colors.background, backgroundColor: 'rgba(128,128,128,0.3)' },
+
+    // Section headers
+    sectionHeader: {
+      flexDirection: 'row', alignItems: 'center', gap: 10,
+      paddingHorizontal: 20, paddingTop: 20, paddingBottom: 6,
+      backgroundColor: colors.background,
+    },
+    sectionTitle: {
+      fontSize: 11, fontWeight: '700', color: colors.textTertiary,
+      letterSpacing: 0.8, textTransform: 'uppercase',
+    },
+    sectionLine: { flex: 1, height: 1, backgroundColor: colors.border },
+    sectionSep: { height: 0 },
 
     list: { paddingBottom: 32 },
     separator: { height: 1, backgroundColor: colors.border, marginLeft: 72 },
