@@ -2,7 +2,7 @@
   "expo": {
     "name": "Crcls",
     "slug": "circles",
-    "version": "1.0.0",
+    "version": "1.1.16",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
