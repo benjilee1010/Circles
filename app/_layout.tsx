@@ -109,7 +109,7 @@ function useWebStyles() {
       ::-webkit-scrollbar-thumb {
         background: rgba(128,128,128,0.25);
         border-radius: 99px;
-        border-right: 4px solid transparent;
+        border-right: 8px solid transparent;
         background-clip: padding-box;
         transition: background 0.2s;
       }
