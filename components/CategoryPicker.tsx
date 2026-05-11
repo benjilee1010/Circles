@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Modal, FlatList,
-  SafeAreaView, Pressable, Platform,
+  SafeAreaView, Pressable, Platform, TextInput,
 } from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { ColorScheme } from '@/lib/colors';
@@ -14,7 +14,9 @@ interface Props {
 
 export function CategoryPicker({ value, onChange }: Props) {
   const [open, setOpen] = useState(false);
-  const { allCategories } = useCategories();
+  const [customMode, setCustomMode] = useState(false);
+  const [customText, setCustomText] = useState('');
+  const { allCategories, refresh } = useCategories();
   const { colors } = useTheme();
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const isWeb = Platform.OS === 'web';
@@ -22,9 +24,57 @@ export function CategoryPicker({ value, onChange }: Props) {
   function handleSelect(cat: string | null) {
     onChange(cat);
     setOpen(false);
+    setCustomMode(false);
+    setCustomText('');
   }
 
-  const items = [null, ...allCategories];
+  function handleCustomSubmit() {
+    const trimmed = customText.trim();
+    if (!trimmed) return;
+    onChange(trimmed);
+    refresh();
+    setOpen(false);
+    setCustomMode(false);
+    setCustomText('');
+  }
+
+  function handleClose() {
+    setOpen(false);
+    setCustomMode(false);
+    setCustomText('');
+  }
+
+  const items: (string | null)[] = [null, ...allCategories];
+
+  const customRow = (
+    <View>
+      <View style={styles.sep} />
+      {customMode ? (
+        <View style={styles.customInputRow}>
+          <TextInput
+            style={styles.customInput}
+            placeholder="Category name…"
+            placeholderTextColor={colors.textTertiary}
+            value={customText}
+            onChangeText={setCustomText}
+            autoFocus
+            returnKeyType="done"
+            onSubmitEditing={handleCustomSubmit}
+          />
+          <TouchableOpacity style={styles.customAddBtn} onPress={handleCustomSubmit}>
+            <Text style={styles.customAddBtnText}>Add</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <Pressable
+          style={({ pressed }: any) => [styles.option, pressed && styles.optionPressed]}
+          onPress={() => setCustomMode(true)}
+        >
+          <Text style={[styles.optionText, { color: colors.textSecondary }]}>＋ New category…</Text>
+        </Pressable>
+      )}
+    </View>
+  );
 
   return (
     <>
@@ -42,12 +92,11 @@ export function CategoryPicker({ value, onChange }: Props) {
         transparent={isWeb}
       >
         {isWeb ? (
-          // Web: centered popup overlay
-          <Pressable style={styles.overlay} onPress={() => setOpen(false)}>
+          <Pressable style={styles.overlay} onPress={handleClose}>
             <Pressable style={styles.popup} onPress={(e) => e.stopPropagation()}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Category</Text>
-                <TouchableOpacity onPress={() => setOpen(false)}>
+                <TouchableOpacity onPress={handleClose}>
                   <Text style={styles.modalDone}>Done</Text>
                 </TouchableOpacity>
               </View>
@@ -55,7 +104,7 @@ export function CategoryPicker({ value, onChange }: Props) {
                 <View key={item ?? '__none__'}>
                   {index > 0 && <View style={styles.sep} />}
                   <Pressable
-                    style={({ pressed }) => [styles.option, pressed && styles.optionPressed]}
+                    style={({ pressed }: any) => [styles.option, pressed && styles.optionPressed]}
                     onPress={() => handleSelect(item)}
                   >
                     <Text style={styles.optionText}>{item ?? 'None'}</Text>
@@ -63,14 +112,14 @@ export function CategoryPicker({ value, onChange }: Props) {
                   </Pressable>
                 </View>
               ))}
+              {customRow}
             </Pressable>
           </Pressable>
         ) : (
-          // Native: full-screen sheet
           <SafeAreaView style={styles.modal}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Category</Text>
-              <TouchableOpacity onPress={() => setOpen(false)}>
+              <TouchableOpacity onPress={handleClose}>
                 <Text style={styles.modalDone}>Done</Text>
               </TouchableOpacity>
             </View>
@@ -79,7 +128,7 @@ export function CategoryPicker({ value, onChange }: Props) {
               keyExtractor={(item) => item ?? '__none__'}
               renderItem={({ item }) => (
                 <Pressable
-                  style={({ pressed }) => [styles.option, pressed && styles.optionPressed]}
+                  style={({ pressed }: any) => [styles.option, pressed && styles.optionPressed]}
                   onPress={() => handleSelect(item)}
                 >
                   <Text style={styles.optionText}>{item ?? 'None'}</Text>
@@ -87,6 +136,7 @@ export function CategoryPicker({ value, onChange }: Props) {
                 </Pressable>
               )}
               ItemSeparatorComponent={() => <View style={styles.sep} />}
+              ListFooterComponent={customRow}
             />
           </SafeAreaView>
         )}
@@ -106,7 +156,6 @@ function makeStyles(colors: ColorScheme) {
     triggerPlaceholder: { color: colors.textTertiary },
     chevron: { fontSize: 20, color: colors.textTertiary },
 
-    // Web overlay
     overlay: {
       flex: 1, backgroundColor: 'rgba(0,0,0,0.4)',
       alignItems: 'center', justifyContent: 'center',
@@ -118,7 +167,6 @@ function makeStyles(colors: ColorScheme) {
       overflow: 'hidden',
     },
 
-    // Native sheet
     modal: { flex: 1, backgroundColor: colors.background },
 
     modalHeader: {
@@ -127,7 +175,7 @@ function makeStyles(colors: ColorScheme) {
       borderBottomWidth: 1, borderBottomColor: colors.border,
     },
     modalTitle: { fontSize: 17, fontWeight: '600', color: colors.text },
-    modalDone: { fontSize: 17, fontWeight: '600', color: colors.text },
+    modalDone:  { fontSize: 17, fontWeight: '600', color: colors.text },
 
     option: {
       flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
@@ -137,5 +185,20 @@ function makeStyles(colors: ColorScheme) {
     optionText: { fontSize: 16, color: colors.text },
     check: { fontSize: 17, color: colors.text },
     sep: { height: 1, backgroundColor: colors.border, marginHorizontal: 20 },
+
+    customInputRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 10,
+      paddingHorizontal: 20, paddingVertical: 12,
+    },
+    customInput: {
+      flex: 1, fontSize: 16, color: colors.text,
+      backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+      borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9,
+    },
+    customAddBtn: {
+      backgroundColor: colors.text, borderRadius: 10,
+      paddingHorizontal: 16, paddingVertical: 9,
+    },
+    customAddBtnText: { fontSize: 15, fontWeight: '600', color: colors.background },
   });
 }

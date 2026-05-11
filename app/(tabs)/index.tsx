@@ -350,12 +350,11 @@ function LogTodayModal({ visible, contacts, colors, onClose, onSave }: {
 
 function makeModalStyles(colors: ColorScheme) {
   return StyleSheet.create({
-    backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+    backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', padding: 24 },
     sheet: {
-      backgroundColor: colors.background, borderTopLeftRadius: 20, borderTopRightRadius: 20,
-      paddingHorizontal: 20, paddingBottom: 36, paddingTop: 12,
-      maxHeight: '80%',
-      maxWidth: 480, width: '100%', alignSelf: 'center',
+      backgroundColor: colors.background, borderRadius: 20,
+      paddingHorizontal: 20, paddingBottom: 24, paddingTop: 20,
+      maxHeight: '80%', maxWidth: 480, width: '100%',
     },
     handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 16 },
     title: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 14, textAlign: 'center' },
