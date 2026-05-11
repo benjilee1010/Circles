@@ -61,7 +61,7 @@ function makeStyles(colors: ColorScheme) {
     },
     bar: {
       flexDirection: 'row',
-      height: 52,
+      height: 64,
       alignItems: 'stretch',
     },
     tabItem: {
