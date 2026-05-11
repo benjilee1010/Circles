@@ -120,8 +120,8 @@ function CalPicker({ visible, onPick, onCancel, colors }: {
 
 function makeCalStyles(colors: ColorScheme) {
   return StyleSheet.create({
-    backdrop:        { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
-    sheet:           { backgroundColor: colors.background, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 36, maxWidth: 480, width: '100%', alignSelf: 'center' },
+    backdrop:        { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+    sheet:           { backgroundColor: colors.background, borderRadius: 20, padding: 20, paddingBottom: 28, maxWidth: 420, width: '100%' },
     title:           { fontSize: 17, fontWeight: '700', color: colors.text, textAlign: 'center', marginBottom: 16 },
     nav:             { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
     navBtn:          { padding: 8 },
