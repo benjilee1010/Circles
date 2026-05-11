@@ -20,69 +20,87 @@ const todayStr = toDateStr(new Date());
 
 // ─── Calendar picker ──────────────────────────────────────────────────────────
 
-function CalPicker({ onPick, onCancel, colors }: {
+const CAL_DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+function CalPicker({ visible, onPick, onCancel, colors }: {
+  visible: boolean;
   onPick: (d: string) => void;
   onCancel: () => void;
   colors: ColorScheme;
 }) {
-  const [viewMonth, setViewMonth] = useState(() => startOfMonth(new Date()));
+  const cs = React.useMemo(() => makeCalStyles(colors), [colors]);
+  const today = new Date();
+  const [viewMonth, setViewMonth] = useState(() => startOfMonth(today));
+
+  React.useEffect(() => {
+    if (visible) setViewMonth(startOfMonth(new Date()));
+  }, [visible]);
+
   const monthStart = startOfMonth(viewMonth);
+  const monthEnd   = endOfMonth(viewMonth);
   const gridStart  = startOfWeek(monthStart, { weekStartsOn: 0 });
-  const gridEnd    = endOfWeek(endOfMonth(viewMonth), { weekStartsOn: 0 });
+  const gridEnd    = endOfWeek(monthEnd, { weekStartsOn: 0 });
+
   const weeks: Date[][] = [];
   let cursor = gridStart;
   while (cursor <= gridEnd) {
-    const wk: Date[] = [];
-    for (let i = 0; i < 7; i++) { wk.push(cursor); cursor = addDays(cursor, 1); }
-    weeks.push(wk);
+    const week: Date[] = [];
+    for (let i = 0; i < 7; i++) { week.push(cursor); cursor = addDays(cursor, 1); }
+    weeks.push(week);
   }
-  const canFwd = !isSameMonth(viewMonth, new Date());
+
+  const canFwd = !isSameMonth(viewMonth, today);
 
   return (
-    <Modal visible transparent animationType="fade">
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <Pressable style={cs.backdrop} onPress={onCancel}>
-        <Pressable style={[cs.sheet, { backgroundColor: colors.background }]} onPress={(e) => e.stopPropagation()}>
-          <Text style={[cs.title, { color: colors.text }]}>Pick a date</Text>
+        <Pressable style={cs.sheet} onPress={(e) => e.stopPropagation()}>
+          <Text style={cs.title}>Pick a date</Text>
 
           <View style={cs.nav}>
             <TouchableOpacity onPress={() => setViewMonth(subMonths(viewMonth, 1))} style={cs.navBtn}>
-              <Text style={[cs.arrow, { color: colors.text }]}>‹</Text>
+              <Text style={cs.arrow}>‹</Text>
             </TouchableOpacity>
-            <Text style={[cs.monthLabel, { color: colors.text }]}>{format(viewMonth, 'MMMM yyyy')}</Text>
-            <TouchableOpacity onPress={() => canFwd && setViewMonth(addMonths(viewMonth, 1))} style={cs.navBtn} disabled={!canFwd}>
-              <Text style={[cs.arrow, { color: canFwd ? colors.text : colors.textTertiary }]}>›</Text>
+            <Text style={cs.monthLabel}>{format(viewMonth, 'MMMM yyyy')}</Text>
+            <TouchableOpacity
+              onPress={() => { if (canFwd) setViewMonth(addMonths(viewMonth, 1)); }}
+              style={cs.navBtn}
+              disabled={!canFwd}
+            >
+              <Text style={[cs.arrow, !canFwd && cs.arrowDisabled]}>›</Text>
             </TouchableOpacity>
           </View>
 
           <View style={cs.dayHdrRow}>
-            {['S','M','T','W','T','F','S'].map((d, i) => (
-              <Text key={i} style={[cs.dayHdr, { color: colors.textTertiary }]}>{d}</Text>
+            {CAL_DAY_LABELS.map((d, i) => (
+              <Text key={i} style={cs.dayHdr}>{d}</Text>
             ))}
           </View>
 
-          {weeks.map((wk, wi) => (
+          {weeks.map((week, wi) => (
             <View key={wi} style={cs.week}>
-              {wk.map((day, di) => {
+              {week.map((day, di) => {
                 const ds = toDateStr(day);
-                const inMon   = isSameMonth(day, viewMonth);
-                const isToday = ds === todayStr;
-                const isFut   = ds > todayStr;
+                const inMon    = isSameMonth(day, viewMonth);
+                const isToday_ = ds === todayStr;
+                const isFut    = ds > todayStr;
                 const disabled = !inMon || isFut;
                 return (
                   <TouchableOpacity
                     key={di}
                     style={[
                       cs.day,
-                      { backgroundColor: disabled ? 'transparent' : colors.surfaceAlt },
-                      isToday && { borderWidth: 1.5, borderColor: colors.text },
+                      isToday_ && cs.dayToday,
+                      disabled && cs.dayDisabled,
                     ]}
-                    onPress={() => !disabled && onPick(ds)}
+                    onPress={() => { if (!disabled) onPick(ds); }}
                     disabled={disabled}
                   >
-                    <Text style={{
-                      fontSize: 14, fontWeight: isToday ? '700' : '500',
-                      color: disabled ? colors.textTertiary : colors.text,
-                    }}>
+                    <Text style={[
+                      cs.dayNum,
+                      isToday_ && cs.dayNumToday,
+                      disabled && cs.dayNumDisabled,
+                    ]}>
                       {inMon ? format(day, 'd') : ''}
                     </Text>
                   </TouchableOpacity>
@@ -92,7 +110,7 @@ function CalPicker({ onPick, onCancel, colors }: {
           ))}
 
           <TouchableOpacity style={cs.cancelBtn} onPress={onCancel}>
-            <Text style={{ fontSize: 15, color: colors.textSecondary }}>Cancel</Text>
+            <Text style={cs.cancelBtnText}>Cancel</Text>
           </TouchableOpacity>
         </Pressable>
       </Pressable>
@@ -100,20 +118,29 @@ function CalPicker({ onPick, onCancel, colors }: {
   );
 }
 
-const cs = StyleSheet.create({
-  backdrop:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
-  sheet:      { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 36 },
-  title:      { fontSize: 17, fontWeight: '700', textAlign: 'center', marginBottom: 16 },
-  nav:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-  navBtn:     { padding: 8 },
-  arrow:      { fontSize: 26, fontWeight: '300' },
-  monthLabel: { fontSize: 15, fontWeight: '600' },
-  dayHdrRow:  { flexDirection: 'row', marginBottom: 4 },
-  dayHdr:     { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '600' },
-  week:       { flexDirection: 'row', marginBottom: 4 },
-  day:        { flex: 1, aspectRatio: 1, borderRadius: 10, margin: 2, alignItems: 'center', justifyContent: 'center' },
-  cancelBtn:  { alignItems: 'center', paddingVertical: 14 },
-});
+function makeCalStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    backdrop:        { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
+    sheet:           { backgroundColor: colors.background, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 36, maxWidth: 480, width: '100%', alignSelf: 'center' },
+    title:           { fontSize: 17, fontWeight: '700', color: colors.text, textAlign: 'center', marginBottom: 16 },
+    nav:             { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+    navBtn:          { padding: 8 },
+    arrow:           { fontSize: 26, fontWeight: '300', color: colors.text },
+    arrowDisabled:   { color: colors.textTertiary },
+    monthLabel:      { fontSize: 15, fontWeight: '600', color: colors.text },
+    dayHdrRow:       { flexDirection: 'row', marginBottom: 4 },
+    dayHdr:          { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '600', color: colors.textTertiary, letterSpacing: 0.4 },
+    week:            { flexDirection: 'row', marginBottom: 4 },
+    day:             { flex: 1, aspectRatio: 1, borderRadius: 10, margin: 2, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceAlt },
+    dayToday:        { borderWidth: 1.5, borderColor: colors.text },
+    dayDisabled:     { backgroundColor: 'transparent' },
+    dayNum:          { fontSize: 14, fontWeight: '500', color: colors.text },
+    dayNumToday:     { fontWeight: '700' },
+    dayNumDisabled:  { color: colors.textTertiary },
+    cancelBtn:       { alignItems: 'center', paddingVertical: 14 },
+    cancelBtnText:   { fontSize: 15, color: colors.textSecondary },
+  });
+}
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
@@ -266,13 +293,12 @@ export default function GroupLogScreen() {
         </TouchableOpacity>
       </View>
 
-      {showCal && (
-        <CalPicker
-          colors={colors}
-          onPick={(d) => { setDate(d); setShowCal(false); }}
-          onCancel={() => setShowCal(false)}
-        />
-      )}
+      <CalPicker
+        visible={showCal}
+        colors={colors}
+        onPick={(d) => { setDate(d); setShowCal(false); }}
+        onCancel={() => setShowCal(false)}
+      />
     </SafeAreaView>
   );
 }
