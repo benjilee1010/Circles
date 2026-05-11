@@ -3,6 +3,9 @@ import {
   View, Text, SectionList, TouchableOpacity, StyleSheet,
   RefreshControl, SafeAreaView, Pressable, ScrollView, TextInput,
 } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
+import * as Haptics from 'expo-haptics';
+import { format } from 'date-fns';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '@/context/ThemeContext';
@@ -13,6 +16,7 @@ import { ContactWithMeta } from '@/lib/types';
 import { frequencyLabel } from '@/lib/frequencies';
 import { ContactAvatar } from '@/components/ContactAvatar';
 import { PageContainer } from '@/components/PageContainer';
+import { supabase } from '@/lib/supabase';
 
 type BadgeMode = 'any' | 'hung_out' | 'kept_in_touch';
 type SortMode  = 'least_recent' | 'most_recent' | 'alphabetical';
@@ -41,6 +45,21 @@ export default function PeopleScreen() {
     refresh();
     refreshCategories();
   }, []));
+
+  const logTodayInteraction = useCallback(async (contactId: string, type: 'hung_out' | 'kept_in_touch') => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const { data: existing } = await supabase
+      .from('interactions').select('id')
+      .eq('contact_id', contactId).eq('date', today).eq('type', type)
+      .maybeSingle();
+    if (existing) {
+      await supabase.from('interactions').delete().eq('id', existing.id);
+    } else {
+      await supabase.from('interactions').insert({ contact_id: contactId, date: today, type });
+    }
+    refresh();
+  }, [refresh]);
 
   const countFor = (cat: string) => contacts.filter((c) => c.category === cat).length;
   const uncategorizedCount = contacts.filter((c) => !c.category).length;
@@ -85,10 +104,11 @@ export default function PeopleScreen() {
       contact={item}
       badgeMode={badgeMode}
       onPress={() => router.push(`/contact/${item.id}`)}
+      onLog={logTodayInteraction}
       colors={colors}
       styles={styles}
     />
-  ), [router, colors, styles, badgeMode]);
+  ), [router, colors, styles, badgeMode, logTodayInteraction]);
 
   const renderSectionHeader = useCallback(({ section }: { section: Section }) => {
     if (!section.title) return null;
@@ -121,6 +141,9 @@ export default function PeopleScreen() {
             clearButtonMode="while-editing"
             autoCorrect={false}
           />
+          <TouchableOpacity style={styles.groupBtn} onPress={() => router.push('/group-log')}>
+            <Text style={styles.groupBtnText}>Group</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/contact/add')}>
             <Text style={styles.addBtnText}>+</Text>
           </TouchableOpacity>
@@ -229,20 +252,22 @@ export default function PeopleScreen() {
 }
 
 function ContactRow({
-  contact, badgeMode, onPress, colors, styles,
+  contact, badgeMode, onPress, onLog, colors, styles,
 }: {
   contact: ContactWithMeta;
   badgeMode: BadgeMode;
   onPress: () => void;
+  onLog: (id: string, type: 'hung_out' | 'kept_in_touch') => void;
   colors: ColorScheme;
   styles: ReturnType<typeof makeStyles>;
 }) {
+  const swipeRef = React.useRef<Swipeable>(null);
+
   const days =
     badgeMode === 'hung_out'      ? contact.days_since_hung_out :
     badgeMode === 'kept_in_touch' ? contact.days_since_kept_in_touch :
     contact.days_since_contact;
 
-  // Is this contact a "regular" for the current badge mode?
   const isRegular =
     badgeMode === 'hung_out'      ? contact.is_regular_hangout :
     badgeMode === 'kept_in_touch' ? contact.is_regular_checkin :
@@ -257,29 +282,50 @@ function ContactRow({
     ? `${contact.category} · ${frequencyLabel(contact.reminder_frequency)}`
     : frequencyLabel(contact.reminder_frequency);
 
+  function renderRightActions() {
+    return (
+      <View style={styles.swipeActions}>
+        <TouchableOpacity
+          style={[styles.swipeBtn, { backgroundColor: colors.ok }]}
+          onPress={() => { onLog(contact.id, 'hung_out'); swipeRef.current?.close(); }}
+        >
+          <Text style={[styles.swipeBtnText, { color: '#FFFFFF' }]}>Hung{'\n'}out</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.swipeBtn, { backgroundColor: colors.text }]}
+          onPress={() => { onLog(contact.id, 'kept_in_touch'); swipeRef.current?.close(); }}
+        >
+          <Text style={[styles.swipeBtnText, { color: colors.background }]}>Kept in{'\n'}touch</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
-    <Pressable style={(state: any) => [styles.row, (state.pressed || state.hovered) && styles.rowPressed]} onPress={onPress}>
-      <View style={styles.avatarWrap}>
-        <ContactAvatar
-          contactId={contact.id}
-          userId={contact.user_id}
-          name={contact.name}
-          avatarUrl={contact.avatar_url}
-          size={44}
-          editable={false}
-        />
-      </View>
-      <View style={styles.rowMeta}>
-        <Text style={styles.rowName}>{contact.name}</Text>
-        <Text style={styles.rowSub} numberOfLines={1}>{subtitle}</Text>
-        {contact.birthday_soon && (
-          <Text style={styles.birthdayTag}>🎂 Birthday coming soon!</Text>
-        )}
-      </View>
-      <View style={[styles.badge, { backgroundColor: statusBg }]}>
-        <Text style={[styles.badgeText, { color: statusColor }]}>{daysLabel}</Text>
-      </View>
-    </Pressable>
+    <Swipeable ref={swipeRef} renderRightActions={renderRightActions} overshootRight={false} friction={2} rightThreshold={40}>
+      <Pressable style={(state: any) => [styles.row, (state.pressed || state.hovered) && styles.rowPressed]} onPress={onPress}>
+        <View style={styles.avatarWrap}>
+          <ContactAvatar
+            contactId={contact.id}
+            userId={contact.user_id}
+            name={contact.name}
+            avatarUrl={contact.avatar_url}
+            size={44}
+            editable={false}
+          />
+        </View>
+        <View style={styles.rowMeta}>
+          <Text style={styles.rowName}>{contact.name}</Text>
+          <Text style={styles.rowSub} numberOfLines={1}>{subtitle}</Text>
+          {contact.birthday_soon && (
+            <Text style={styles.birthdayTag}>🎂 Birthday coming soon!</Text>
+          )}
+        </View>
+        <View style={[styles.badge, { backgroundColor: statusBg }]}>
+          <Text style={[styles.badgeText, { color: statusColor }]}>{daysLabel}</Text>
+        </View>
+      </Pressable>
+    </Swipeable>
   );
 }
 
@@ -303,6 +349,12 @@ function makeStyles(colors: ColorScheme) {
       borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
       fontSize: 15, color: colors.text,
     },
+    groupBtn: {
+      height: 40, borderRadius: 12, paddingHorizontal: 14,
+      backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    groupBtnText: { color: colors.text, fontSize: 13, fontWeight: '500' },
     addBtn: {
       width: 40, height: 40, borderRadius: 12,
       backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
@@ -365,6 +417,9 @@ function makeStyles(colors: ColorScheme) {
     rowMeta: { flex: 1 },
     rowName: { fontSize: 16, fontWeight: '500', color: colors.text },
     rowSub: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+    swipeActions: { flexDirection: 'row', width: 180 },
+    swipeBtn: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    swipeBtnText: { fontSize: 12, fontWeight: '700', textAlign: 'center', lineHeight: 18 },
     badge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
     badgeText: { fontSize: 12, fontWeight: '600' },
     birthdayTag: { fontSize: 12, color: colors.dueSoon, fontWeight: '600', marginTop: 3 },

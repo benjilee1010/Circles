@@ -2,6 +2,7 @@ import 'react-native-url-polyfill/auto';
 import { useEffect, useRef } from 'react';
 import React from 'react';
 import { Platform } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
@@ -71,6 +72,10 @@ function RootLayoutNav() {
           headerShadowVisible: false,
           title: 'Change Password',
         }}
+      />
+      <Stack.Screen
+        name="group-log"
+        options={{ presentation: 'modal', headerShown: false }}
       />
       <Stack.Screen
         name="settings/change-email"
@@ -163,11 +168,13 @@ function useWebStyles() {
 export default function RootLayout() {
   useWebStyles();
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <StatusBar style="auto" />
-        <RootLayoutNav />
-      </AuthProvider>
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider>
+        <AuthProvider>
+          <StatusBar style="auto" />
+          <RootLayoutNav />
+        </AuthProvider>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }
