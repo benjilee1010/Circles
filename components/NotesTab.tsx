@@ -624,7 +624,7 @@ function makeStyles(colors: ColorScheme) {
     modalSheet: {
       backgroundColor: colors.background, borderRadius: 20,
       padding: 20, paddingBottom: 28,
-      maxWidth: 420, width: '100%',
+      maxWidth: 420, width: '100%', alignSelf: 'center',
     },
     modalTitle: {
       fontSize: 17, fontWeight: '700', color: colors.text,
@@ -646,7 +646,7 @@ function makeStyles(colors: ColorScheme) {
     },
     calWeek: { flexDirection: 'row', marginBottom: 4 },
     calDay: {
-      flex: 1, aspectRatio: 1, borderRadius: 10, margin: 2,
+      flex: 1, height: 42, borderRadius: 10, margin: 2,
       alignItems: 'center', justifyContent: 'center',
       backgroundColor: colors.surfaceAlt,
     },
