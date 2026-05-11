@@ -118,7 +118,7 @@ function DatePickerModal({ visible, existingDates, onPick, onCancel, colors, sty
   const canGoForward = !isSameMonth(viewMonth, today);
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel} statusBarTranslucent>
       <Pressable style={styles.modalBackdrop} onPress={onCancel}>
         <Pressable style={styles.modalSheet} onPress={(e) => e.stopPropagation()}>
           <Text style={styles.modalTitle}>When was this conversation?</Text>
@@ -618,12 +618,13 @@ function makeStyles(colors: ColorScheme) {
 
     // Date picker modal
     modalBackdrop: {
-      flex: 1, backgroundColor: 'rgba(0,0,0,0.35)',
-      justifyContent: 'flex-end',
+      flex: 1, backgroundColor: 'rgba(0,0,0,0.55)',
+      justifyContent: 'center', alignItems: 'center', padding: 24,
     },
     modalSheet: {
-      backgroundColor: colors.background, borderTopLeftRadius: 20, borderTopRightRadius: 20,
-      padding: 20, paddingBottom: 36,
+      backgroundColor: colors.background, borderRadius: 20,
+      padding: 20, paddingBottom: 28,
+      maxWidth: 420, width: '100%',
     },
     modalTitle: {
       fontSize: 17, fontWeight: '700', color: colors.text,
