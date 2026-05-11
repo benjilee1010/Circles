@@ -188,7 +188,6 @@ export default function GroupLogScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.inner}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.brandRow}>
@@ -203,6 +202,7 @@ export default function GroupLogScreen() {
         </TouchableOpacity>
       </View>
 
+      <View style={styles.inner}>
       <View style={styles.body}>
         <Text style={styles.screenTitle}>Group Hangout</Text>
 
