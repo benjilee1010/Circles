@@ -301,7 +301,7 @@ function LogTodayModal({ visible, contacts, colors, onClose, onSave }: {
             autoCorrect={false}
           />
 
-          <ScrollView showsVerticalScrollIndicator={false} style={styles.list}>
+          <ScrollView showsVerticalScrollIndicator style={styles.list}>
             {filtered.map((c, i) => {
               const sel = selections[c.id] ?? null;
               return (
