@@ -202,7 +202,6 @@ export default function GroupLogScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.inner}>
       <View style={styles.body}>
         <Text style={styles.screenTitle}>Group Hangout</Text>
 
@@ -294,8 +293,6 @@ export default function GroupLogScreen() {
         </TouchableOpacity>
       </View>
 
-      </View>
-
       <CalPicker
         visible={showCal}
         colors={colors}
@@ -309,7 +306,6 @@ export default function GroupLogScreen() {
 function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
     safe:      { flex: 1, backgroundColor: colors.background },
-    inner:     { flex: 1, width: '100%', maxWidth: 560, alignSelf: 'center' },
     header:    { flexDirection: 'column', alignItems: 'flex-start', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 },
     brandRow:  { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 4 },
     brand:     { fontSize: 28, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
@@ -317,7 +313,7 @@ function makeStyles(colors: ColorScheme) {
     backBtn:   { padding: 4 },
     backText:  { fontSize: 17, color: colors.text, fontWeight: '400' },
 
-    body:        { flex: 1, paddingHorizontal: 20, paddingTop: 8 },
+    body:        { flex: 1, paddingHorizontal: 20, paddingTop: 8, maxWidth: 560, width: '100%', alignSelf: 'center' },
     screenTitle: { fontSize: 22, fontWeight: '700', color: colors.text, marginBottom: 16 },
 
     typeBar:          { flexDirection: 'row', backgroundColor: colors.surfaceAlt, borderRadius: 10, padding: 3, marginBottom: 12 },
