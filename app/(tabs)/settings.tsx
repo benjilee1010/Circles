@@ -71,7 +71,7 @@ export default function SettingsScreen() {
       <View style={styles.header}>
         <View style={styles.brandRow}>
           <Text style={styles.brand}>Crcls</Text>
-          <Text style={styles.brandVersion}>version 1.1.17  Made by Hoyeon Lee</Text>
+          <Text style={styles.brandVersion}>version 1.2.1  Made by Hoyeon Lee</Text>
         </View>
       </View>
 

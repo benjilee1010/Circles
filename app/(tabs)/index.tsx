@@ -113,7 +113,7 @@ export default function PeopleScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <Text style={styles.title}>Crcls</Text>
-        <Text style={styles.version}>version 1.1.17  Made by Hoyeon Lee</Text>
+        <Text style={styles.version}>version 1.2.1  Made by Hoyeon Lee</Text>
       </View>
 
       <PageContainer>

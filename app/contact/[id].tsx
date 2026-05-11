@@ -115,7 +115,7 @@ export default function ContactScreen() {
         <View style={styles.backRow}>
           <View style={styles.backBrand}>
             <Text style={styles.backBrandTitle}>Crcls</Text>
-            <Text style={styles.backBrandVersion}>version 1.1.17  Made by Hoyeon Lee</Text>
+            <Text style={styles.backBrandVersion}>version 1.2.1  Made by Hoyeon Lee</Text>
           </View>
           <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} style={styles.backBtn}>
             <Text style={styles.backText}>‹ Back</Text>
@@ -139,7 +139,7 @@ export default function ContactScreen() {
       <View style={styles.backRow}>
         <View style={styles.backBrand}>
           <Text style={styles.backBrandTitle}>Crcls</Text>
-          <Text style={styles.backBrandVersion}>version 1.1.17  Made by Hoyeon Lee</Text>
+          <Text style={styles.backBrandVersion}>version 1.2.1  Made by Hoyeon Lee</Text>
         </View>
         <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} style={styles.backBtn}>
           <Text style={styles.backText}>‹ Back</Text>
