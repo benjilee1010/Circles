@@ -188,6 +188,7 @@ export default function GroupLogScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <View style={styles.inner}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.brandRow}>
@@ -293,6 +294,8 @@ export default function GroupLogScreen() {
         </TouchableOpacity>
       </View>
 
+      </View>
+
       <CalPicker
         visible={showCal}
         colors={colors}
@@ -306,6 +309,7 @@ export default function GroupLogScreen() {
 function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
     safe:      { flex: 1, backgroundColor: colors.background },
+    inner:     { flex: 1, width: '100%', maxWidth: 560, alignSelf: 'center' },
     header:    { flexDirection: 'column', alignItems: 'flex-start', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 },
     brandRow:  { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 4 },
     brand:     { fontSize: 28, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
