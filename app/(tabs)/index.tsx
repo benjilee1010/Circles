@@ -192,6 +192,7 @@ export default function PeopleScreen() {
 
         {/* Grouped list */}
         <SectionList
+          style={{ flex: 1 }}
           sections={sections}
           keyExtractor={(c) => c.id}
           renderItem={renderItem}
