@@ -2,6 +2,7 @@ import React, { useCallback, useState, useMemo } from 'react';
 import {
   View, Text, SectionList, TouchableOpacity, StyleSheet,
   RefreshControl, SafeAreaView, Pressable, ScrollView, TextInput,
+  Modal, ActivityIndicator,
 } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
@@ -18,17 +19,7 @@ import { ContactAvatar } from '@/components/ContactAvatar';
 import { PageContainer } from '@/components/PageContainer';
 import { supabase } from '@/lib/supabase';
 
-type BadgeMode = 'any' | 'hung_out' | 'kept_in_touch';
-type SortMode  = 'least_recent' | 'most_recent' | 'alphabetical';
-
 type Section = { title: string; data: ContactWithMeta[] };
-
-const BADGE_OPTIONS: { mode: BadgeMode; label: string }[] = [
-  { mode: 'any',           label: 'Last contact' },
-  { mode: 'hung_out',      label: 'Hung out' },
-  { mode: 'kept_in_touch', label: 'Kept in touch' },
-];
-
 
 export default function PeopleScreen() {
   const router = useRouter();
@@ -38,8 +29,7 @@ export default function PeopleScreen() {
   const { allCategories, refresh: refreshCategories } = useCategories();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [query, setQuery] = useState('');
-  const [badgeMode, setBadgeMode] = useState<BadgeMode>('any');
-  const [sortMode] = useState<SortMode>('most_recent');
+  const [showLogToday, setShowLogToday] = useState(false);
 
   useFocusEffect(useCallback(() => {
     refresh();
@@ -66,10 +56,9 @@ export default function PeopleScreen() {
 
   function sorted(list: ContactWithMeta[]): ContactWithMeta[] {
     return [...list].sort((a, b) => {
-      if (sortMode === 'alphabetical') return a.name.localeCompare(b.name);
       const aDays = a.days_since_contact ?? 9999;
       const bDays = b.days_since_contact ?? 9999;
-      return sortMode === 'least_recent' ? bDays - aDays : aDays - bDays;
+      return aDays - bDays; // most recent first
     });
   }
 
@@ -78,7 +67,6 @@ export default function PeopleScreen() {
     const q = query.trim().toLowerCase();
     const match = (c: ContactWithMeta) => !q || c.name.toLowerCase().includes(q);
 
-    // Single-category view — no grouping header needed
     if (selectedCategory === '__none__') {
       const data = sorted(contacts.filter((c) => !c.category && match(c)));
       return data.length ? [{ title: '', data }] : [];
@@ -88,7 +76,6 @@ export default function PeopleScreen() {
       return data.length ? [{ title: '', data }] : [];
     }
 
-    // "All" view — group by category
     const result: Section[] = [];
     for (const cat of allCategories) {
       const data = sorted(contacts.filter((c) => c.category === cat && match(c)));
@@ -97,18 +84,17 @@ export default function PeopleScreen() {
     const uncat = sorted(contacts.filter((c) => !c.category && match(c)));
     if (uncat.length) result.push({ title: 'Uncategorized', data: uncat });
     return result;
-  }, [contacts, allCategories, selectedCategory, query, sortMode]);
+  }, [contacts, allCategories, selectedCategory, query]);
 
   const renderItem = useCallback(({ item }: { item: ContactWithMeta }) => (
     <ContactRow
       contact={item}
-      badgeMode={badgeMode}
       onPress={() => router.push(`/contact/${item.id}`)}
       onLog={logTodayInteraction}
       colors={colors}
       styles={styles}
     />
-  ), [router, colors, styles, badgeMode, logTodayInteraction]);
+  ), [router, colors, styles, logTodayInteraction]);
 
   const renderSectionHeader = useCallback(({ section }: { section: Section }) => {
     if (!section.title) return null;
@@ -149,21 +135,11 @@ export default function PeopleScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Badge toggle */}
+        {/* Log today button */}
         {contacts.length > 0 && (
-          <View style={styles.toggleRow}>
-            {BADGE_OPTIONS.map(({ mode, label }) => (
-              <TouchableOpacity
-                key={mode}
-                style={[styles.toggleBtn, badgeMode === mode && styles.toggleBtnActive]}
-                onPress={() => setBadgeMode(mode)}
-              >
-                <Text style={[styles.toggleBtnText, badgeMode === mode && styles.toggleBtnTextActive]}>
-                  {label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity style={styles.logTodayBtn} onPress={() => setShowLogToday(true)}>
+            <Text style={styles.logTodayBtnText}>Log today</Text>
+          </TouchableOpacity>
         )}
 
 
@@ -247,15 +223,170 @@ export default function PeopleScreen() {
           }
         />
       </PageContainer>
+
+      <LogTodayModal
+        visible={showLogToday}
+        contacts={contacts}
+        colors={colors}
+        onClose={() => setShowLogToday(false)}
+        onSave={async (selections) => {
+          const today = format(new Date(), 'yyyy-MM-dd');
+          const rows = Object.entries(selections)
+            .filter(([, t]) => t !== null)
+            .map(([contact_id, type]) => ({ contact_id, date: today, type: type! }));
+          if (rows.length > 0) {
+            await supabase.from('interactions').insert(rows);
+            refresh();
+          }
+        }}
+      />
     </SafeAreaView>
   );
 }
 
+// ─── Log Today Modal ──────────────────────────────────────────────────────────
+
+type LogType = 'hung_out' | 'kept_in_touch';
+
+function LogTodayModal({ visible, contacts, colors, onClose, onSave }: {
+  visible: boolean;
+  contacts: ContactWithMeta[];
+  colors: ColorScheme;
+  onClose: () => void;
+  onSave: (s: Record<string, LogType | null>) => Promise<void>;
+}) {
+  const styles = React.useMemo(() => makeModalStyles(colors), [colors]);
+  const [selections, setSelections] = useState<Record<string, LogType | null>>({});
+  const [query, setQuery] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  // Reset when modal opens
+  React.useEffect(() => {
+    if (visible) { setSelections({}); setQuery(''); }
+  }, [visible]);
+
+  const filtered = contacts.filter((c) =>
+    !query.trim() || c.name.toLowerCase().includes(query.trim().toLowerCase())
+  );
+
+  function toggle(id: string, type: LogType) {
+    setSelections((prev) => ({ ...prev, [id]: prev[id] === type ? null : type }));
+  }
+
+  const count = Object.values(selections).filter(Boolean).length;
+
+  async function handleSave() {
+    setSaving(true);
+    await onSave(selections);
+    setSaving(false);
+    onClose();
+  }
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={styles.backdrop} onPress={onClose}>
+        <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+          {/* Handle */}
+          <View style={styles.handle} />
+
+          <Text style={styles.title}>Log today</Text>
+
+          <TextInput
+            style={styles.search}
+            placeholder="Search…"
+            placeholderTextColor={colors.textTertiary}
+            value={query}
+            onChangeText={setQuery}
+            autoCorrect={false}
+          />
+
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.list}>
+            {filtered.map((c, i) => {
+              const sel = selections[c.id] ?? null;
+              return (
+                <View key={c.id} style={[styles.row, i > 0 && styles.rowBorder]}>
+                  <Text style={styles.name} numberOfLines={1}>{c.name}</Text>
+                  <View style={styles.chips}>
+                    <TouchableOpacity
+                      style={[styles.chip, sel === 'hung_out' && styles.chipGreen]}
+                      onPress={() => toggle(c.id, 'hung_out')}
+                    >
+                      <Text style={[styles.chipText, sel === 'hung_out' && styles.chipTextGreen]}>
+                        Hung out
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.chip, sel === 'kept_in_touch' && styles.chipDark]}
+                      onPress={() => toggle(c.id, 'kept_in_touch')}
+                    >
+                      <Text style={[styles.chipText, sel === 'kept_in_touch' && styles.chipTextDark]}>
+                        Kept in touch
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            })}
+            <View style={{ height: 8 }} />
+          </ScrollView>
+
+          <TouchableOpacity
+            style={[styles.saveBtn, count === 0 && styles.saveBtnOff]}
+            onPress={handleSave}
+            disabled={saving || count === 0}
+          >
+            {saving
+              ? <ActivityIndicator color={colors.background} />
+              : <Text style={[styles.saveBtnText, count === 0 && styles.saveBtnTextOff]}>
+                  {count === 0 ? 'Select interactions to save' : `Save ${count} ${count === 1 ? 'entry' : 'entries'}`}
+                </Text>}
+          </TouchableOpacity>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+function makeModalStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+    sheet: {
+      backgroundColor: colors.background, borderTopLeftRadius: 20, borderTopRightRadius: 20,
+      paddingHorizontal: 20, paddingBottom: 36, paddingTop: 12,
+      maxHeight: '80%',
+    },
+    handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 16 },
+    title: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 14, textAlign: 'center' },
+    search: {
+      backgroundColor: colors.surfaceAlt, borderRadius: 12,
+      paddingHorizontal: 14, paddingVertical: 10,
+      fontSize: 15, color: colors.text, marginBottom: 10,
+    },
+    list: { flexGrow: 0 },
+    row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 11, gap: 10 },
+    rowBorder: { borderTopWidth: 1, borderTopColor: colors.border },
+    name: { flex: 1, fontSize: 15, fontWeight: '500', color: colors.text },
+    chips: { flexDirection: 'row', gap: 6 },
+    chip: {
+      borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6,
+      borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface,
+    },
+    chipGreen: { backgroundColor: colors.ok, borderColor: colors.ok },
+    chipDark:  { backgroundColor: colors.text, borderColor: colors.text },
+    chipText:      { fontSize: 12, fontWeight: '500', color: colors.textSecondary },
+    chipTextGreen: { color: '#FFFFFF', fontWeight: '600' },
+    chipTextDark:  { color: colors.background, fontWeight: '600' },
+    saveBtn:        { backgroundColor: colors.text, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 14 },
+    saveBtnOff:     { backgroundColor: colors.surfaceAlt },
+    saveBtnText:    { fontSize: 15, fontWeight: '600', color: colors.background },
+    saveBtnTextOff: { color: colors.textTertiary },
+  });
+}
+
 function ContactRow({
-  contact, badgeMode, onPress, onLog, colors, styles,
+  contact, onPress, onLog, colors, styles,
 }: {
   contact: ContactWithMeta;
-  badgeMode: BadgeMode;
   onPress: () => void;
   onLog: (id: string, type: 'hung_out' | 'kept_in_touch') => void;
   colors: ColorScheme;
@@ -263,18 +394,10 @@ function ContactRow({
 }) {
   const swipeRef = React.useRef<Swipeable>(null);
 
-  const days =
-    badgeMode === 'hung_out'      ? contact.days_since_hung_out :
-    badgeMode === 'kept_in_touch' ? contact.days_since_kept_in_touch :
-    contact.days_since_contact;
-
-  const isRegular =
-    badgeMode === 'hung_out'      ? contact.is_regular_hangout :
-    badgeMode === 'kept_in_touch' ? contact.is_regular_checkin :
-    (contact.is_regular_hangout || contact.is_regular_checkin);
-
-  const daysLabel   = isRegular ? 'Regular' : days === null ? 'Never' : days === 0 ? 'Today' : `${days}d ago`;
-  const isOverdue   = !isRegular && (badgeMode === 'any' ? contact.is_overdue : days === null);
+  const days = contact.days_since_contact;
+  const isRegular = contact.is_regular_hangout || contact.is_regular_checkin;
+  const daysLabel = isRegular ? 'Regular' : days === null ? 'Never' : days === 0 ? 'Today' : `${days}d ago`;
+  const isOverdue = !isRegular && contact.is_overdue;
   const statusColor = isRegular ? colors.dueSoon : isOverdue ? colors.overdue : colors.ok;
   const statusBg    = isRegular ? colors.dueSoonLight : isOverdue ? colors.overdueLight : colors.okLight;
 
@@ -362,15 +485,13 @@ function makeStyles(colors: ColorScheme) {
     },
     addBtnText: { color: colors.text, fontSize: 26, lineHeight: 30, fontWeight: '300' },
 
-    // Badge toggle
-    toggleRow: {
-      flexDirection: 'row', marginHorizontal: 16, marginTop: 6, marginBottom: 4,
-      backgroundColor: colors.surfaceAlt, borderRadius: 10, padding: 3,
+    // Log today button
+    logTodayBtn: {
+      marginHorizontal: 16, marginTop: 8, marginBottom: 2,
+      backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+      borderRadius: 12, paddingVertical: 11, alignItems: 'center',
     },
-    toggleBtn: { flex: 1, paddingVertical: 6, alignItems: 'center', borderRadius: 8 },
-    toggleBtnActive: { backgroundColor: colors.surface, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } },
-    toggleBtnText: { fontSize: 12, fontWeight: '500', color: colors.textSecondary },
-    toggleBtnTextActive: { color: colors.text, fontWeight: '600' },
+    logTodayBtnText: { fontSize: 14, fontWeight: '600', color: colors.text },
 
 // Filter chips — vertical padding must live on the ScrollView, not
     // contentContainerStyle, or React Native clips it on mobile.
