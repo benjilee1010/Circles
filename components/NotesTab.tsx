@@ -305,12 +305,18 @@ export function NotesTab({ contactId, userId, contactName, initialNotes }: Props
   }
 
   function deleteConvo(id: string) {
-    Alert.alert('Delete entry', 'Remove this conversation note?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () =>
-        persist({ ...data, conversations: data.conversations.filter((c) => c.id !== id) }),
-      },
-    ]);
+    if (Platform.OS === 'web') {
+      if (window.confirm('Remove this conversation note?')) {
+        persist({ ...data, conversations: data.conversations.filter((c) => c.id !== id) });
+      }
+    } else {
+      Alert.alert('Delete entry', 'Remove this conversation note?', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () =>
+          persist({ ...data, conversations: data.conversations.filter((c) => c.id !== id) }),
+        },
+      ]);
+    }
   }
 
   // ── Profile sections ────────────────────────────────────────────────────────
@@ -331,12 +337,18 @@ export function NotesTab({ contactId, userId, contactName, initialNotes }: Props
   }
 
   function deleteSection(id: string) {
-    Alert.alert('Delete section', 'Remove this section?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () =>
-        persist({ ...data, sections: data.sections.filter((s) => s.id !== id) }),
-      },
-    ]);
+    if (Platform.OS === 'web') {
+      if (window.confirm('Remove this section?')) {
+        persist({ ...data, sections: data.sections.filter((s) => s.id !== id) });
+      }
+    } else {
+      Alert.alert('Delete section', 'Remove this section?', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () =>
+          persist({ ...data, sections: data.sections.filter((s) => s.id !== id) }),
+        },
+      ]);
+    }
   }
 
   const usedIds = new Set(data.sections.map((s) => s.id));
