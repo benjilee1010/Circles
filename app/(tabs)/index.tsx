@@ -354,6 +354,7 @@ function makeModalStyles(colors: ColorScheme) {
       backgroundColor: colors.background, borderTopLeftRadius: 20, borderTopRightRadius: 20,
       paddingHorizontal: 20, paddingBottom: 36, paddingTop: 12,
       maxHeight: '80%',
+      maxWidth: 480, width: '100%', alignSelf: 'center',
     },
     handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 16 },
     title: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 14, textAlign: 'center' },
