@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Alert, ActivityIndicator, Modal, Pressable, Platform,
+  TextInput, ActivityIndicator, Modal, Pressable,
 } from 'react-native';
 import {
   format, parseISO, isToday, isYesterday,
@@ -233,6 +233,49 @@ function AutoGrowInput({
   );
 }
 
+// ─── Confirm dialog ───────────────────────────────────────────────────────────
+
+function ConfirmDialog({ visible, message, onConfirm, onCancel, colors }: {
+  visible: boolean;
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  colors: ColorScheme;
+}) {
+  if (!visible) return null;
+  return (
+    <Modal visible transparent animationType="fade" onRequestClose={onCancel}>
+      <Pressable
+        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', padding: 32 }}
+        onPress={onCancel}
+      >
+        <Pressable
+          style={{ backgroundColor: colors.background, borderRadius: 16, padding: 24, width: '100%', maxWidth: 340 }}
+          onPress={(e) => e.stopPropagation()}
+        >
+          <Text style={{ fontSize: 15, color: colors.text, marginBottom: 20, textAlign: 'center', lineHeight: 22 }}>
+            {message}
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <TouchableOpacity
+              onPress={onCancel}
+              style={{ flex: 1, borderRadius: 10, paddingVertical: 12, alignItems: 'center', backgroundColor: colors.surfaceAlt, borderWidth: 1, borderColor: colors.border }}
+            >
+              <Text style={{ fontSize: 15, fontWeight: '500', color: colors.text }}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={onConfirm}
+              style={{ flex: 1, borderRadius: 10, paddingVertical: 12, alignItems: 'center', backgroundColor: colors.overdueLight }}
+            >
+              <Text style={{ fontSize: 15, fontWeight: '600', color: colors.overdue }}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 interface Props {
@@ -249,6 +292,7 @@ export function NotesTab({ contactId, userId, contactName, initialNotes }: Props
   const [saving, setSaving] = useState(false);
   const [showPrompts, setShowPrompts] = useState(false);
   const [datePickerMode, setDatePickerMode] = useState<'new' | string | null>(null);
+  const [confirm, setConfirm] = useState<{ message: string; onConfirm: () => void } | null>(null);
   // 'new' = creating, or a convo id = changing that entry's date
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollRef = useRef<ScrollView>(null);
@@ -305,18 +349,13 @@ export function NotesTab({ contactId, userId, contactName, initialNotes }: Props
   }
 
   function deleteConvo(id: string) {
-    if (Platform.OS === 'web') {
-      if (window.confirm('Remove this conversation note?')) {
+    setConfirm({
+      message: 'Remove this conversation note?',
+      onConfirm: () => {
         persist({ ...data, conversations: data.conversations.filter((c) => c.id !== id) });
-      }
-    } else {
-      Alert.alert('Delete entry', 'Remove this conversation note?', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () =>
-          persist({ ...data, conversations: data.conversations.filter((c) => c.id !== id) }),
-        },
-      ]);
-    }
+        setConfirm(null);
+      },
+    });
   }
 
   // ── Profile sections ────────────────────────────────────────────────────────
@@ -337,18 +376,13 @@ export function NotesTab({ contactId, userId, contactName, initialNotes }: Props
   }
 
   function deleteSection(id: string) {
-    if (Platform.OS === 'web') {
-      if (window.confirm('Remove this section?')) {
+    setConfirm({
+      message: 'Remove this section?',
+      onConfirm: () => {
         persist({ ...data, sections: data.sections.filter((s) => s.id !== id) });
-      }
-    } else {
-      Alert.alert('Delete section', 'Remove this section?', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () =>
-          persist({ ...data, sections: data.sections.filter((s) => s.id !== id) }),
-        },
-      ]);
-    }
+        setConfirm(null);
+      },
+    });
   }
 
   const usedIds = new Set(data.sections.map((s) => s.id));
@@ -510,6 +544,14 @@ export function NotesTab({ contactId, userId, contactName, initialNotes }: Props
         onCancel={() => setDatePickerMode(null)}
         colors={colors}
         styles={styles}
+      />
+
+      <ConfirmDialog
+        visible={confirm !== null}
+        message={confirm?.message ?? ''}
+        onConfirm={confirm?.onConfirm ?? (() => {})}
+        onCancel={() => setConfirm(null)}
+        colors={colors}
       />
     </>
   );
