@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView, Pressable, Alert, Platform,
 } from 'react-native';
-import { format, startOfWeek, addDays, addWeeks, differenceInDays } from 'date-fns';
+import { format, startOfWeek, addDays, addWeeks, isFuture, differenceInDays } from 'date-fns';
 import { useTheme } from '@/context/ThemeContext';
 import { ColorScheme } from '@/lib/colors';
 
