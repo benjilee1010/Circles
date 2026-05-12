@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView, Pressable, Alert, Platform,
 } from 'react-native';
-import { format, startOfWeek, addDays, addWeeks, isFuture, differenceInDays } from 'date-fns';
+import { format, startOfWeek, addDays, addWeeks, differenceInDays } from 'date-fns';
 import { useTheme } from '@/context/ThemeContext';
 import { ColorScheme } from '@/lib/colors';
 
@@ -163,8 +163,7 @@ export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, co
           const isToday = dateStr === format(today, 'yyyy-MM-dd');
           const future = isFuture(day) && !isToday;
           const isPending = dateStr === pendingDate;
-          // Yellow only on today — future days are not tappable so don't highlight them
-          const isRegular = (isRegularHangout || isRegularCheckin) && !isLogged && isToday;
+          const isRegular = (isRegularHangout || isRegularCheckin) && !isLogged && (isToday || future);
 
           return (
             <TouchableOpacity
@@ -177,15 +176,14 @@ export function HangoutCalendar({ hungOutDates, keptInTouchDates, onDayPress, co
                 isToday && !isLogged && !isRegular && styles.dayCellToday,
                 isPending && styles.dayCellPending,
               ]}
-              onPress={() => { if (!future) handleDayTap(dateStr); }}
-              disabled={future}
+              onPress={() => handleDayTap(dateStr)}
             >
               <Text style={[
                 styles.dayNum,
                 isRegular && styles.dayNumRegular,
                 isHungOut && styles.dayNumHungOut,
                 isKeptInTouch && !isHungOut && styles.dayNumKeptInTouch,
-                future && !isRegular && styles.dayNumFuture,
+                future && !isRegular && !isLogged && styles.dayNumFuture,
               ]}>
                 {format(day, 'd')}
               </Text>
