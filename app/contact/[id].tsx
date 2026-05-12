@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Pressable,
   Alert, ActivityIndicator, SafeAreaView, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -30,6 +30,7 @@ export default function ContactScreen() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isRegularHangout, setIsRegularHangout] = useState(false);
   const [isRegularCheckin, setIsRegularCheckin] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ message: string; onConfirm: () => void } | null>(null);
 
   React.useEffect(() => {
     if (contact) {
@@ -57,24 +58,15 @@ export default function ContactScreen() {
     const existing = interactions.find((i) => i.date === date && i.type === type);
     if (existing) {
       const label = type === 'hung_out' ? 'hangout' : 'check-in';
-      if (Platform.OS === 'web') {
-        // eslint-disable-next-line no-alert
-        const confirmed = window.confirm(`Remove this ${label} on ${format(parseISO(date), 'MMM d')}?`);
-        if (confirmed) {
+      const dateLabel = format(parseISO(date), 'MMM d');
+      setConfirmDialog({
+        message: `Remove this ${label} on ${dateLabel}?`,
+        onConfirm: async () => {
           await supabase.from('interactions').delete().eq('id', existing.id).eq('contact_id', id);
+          setConfirmDialog(null);
           refresh();
-        }
-      } else {
-        Alert.alert('Remove log', `Remove this ${label} on ${format(parseISO(date), 'MMM d')}?`, [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Remove', style: 'destructive', onPress: async () => {
-              await supabase.from('interactions').delete().eq('id', existing.id).eq('contact_id', id);
-              refresh();
-            },
-          },
-        ]);
-      }
+        },
+      });
     } else {
       await supabase.from('interactions').insert({ contact_id: id, date, type });
       refresh();
@@ -82,23 +74,14 @@ export default function ContactScreen() {
   }
 
   async function handleDelete() {
-    if (Platform.OS === 'web') {
-      const confirmed = window.confirm(`Remove ${contact?.name} from your circles?`);
-      if (confirmed) {
-        await supabase.from('contacts').delete().eq('id', id).eq('user_id', contact.user_id);
+    setConfirmDialog({
+      message: `Remove ${contact?.name} from your circles?`,
+      onConfirm: async () => {
+        await supabase.from('contacts').delete().eq('id', id).eq('user_id', contact?.user_id);
+        setConfirmDialog(null);
         router.back();
-      }
-    } else {
-      Alert.alert('Remove person', `Remove ${contact?.name} from your circles?`, [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove', style: 'destructive', onPress: async () => {
-            await supabase.from('contacts').delete().eq('id', id).eq('user_id', contact.user_id);
-            router.back();
-          },
-        },
-      ]);
-    }
+      },
+    });
   }
 
   if (loading || (!contact && !error)) {
@@ -282,6 +265,38 @@ export default function ContactScreen() {
         )}
       </KeyboardAvoidingView>
       </PageContainer>
+
+      {confirmDialog && (
+        <Modal visible transparent animationType="fade" onRequestClose={() => setConfirmDialog(null)}>
+          <Pressable
+            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', padding: 32 }}
+            onPress={() => setConfirmDialog(null)}
+          >
+            <Pressable
+              style={{ backgroundColor: colors.background, borderRadius: 16, padding: 24, width: '100%', maxWidth: 340 }}
+              onPress={(e) => e.stopPropagation()}
+            >
+              <Text style={{ fontSize: 15, color: colors.text, marginBottom: 20, textAlign: 'center', lineHeight: 22 }}>
+                {confirmDialog.message}
+              </Text>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <TouchableOpacity
+                  onPress={() => setConfirmDialog(null)}
+                  style={{ flex: 1, borderRadius: 10, paddingVertical: 12, alignItems: 'center', backgroundColor: colors.surfaceAlt, borderWidth: 1, borderColor: colors.border }}
+                >
+                  <Text style={{ fontSize: 15, fontWeight: '500', color: colors.text }}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={confirmDialog.onConfirm}
+                  style={{ flex: 1, borderRadius: 10, paddingVertical: 12, alignItems: 'center', backgroundColor: colors.overdueLight }}
+                >
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: colors.overdue }}>Remove</Text>
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+          </Pressable>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 }
