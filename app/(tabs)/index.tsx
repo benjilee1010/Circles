@@ -6,7 +6,10 @@ import {
 } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
-import { format } from 'date-fns';
+import {
+  format, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
+  addDays, addMonths, subMonths, isSameMonth,
+} from 'date-fns';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '@/context/ThemeContext';
@@ -230,11 +233,10 @@ export default function PeopleScreen() {
         contacts={contacts}
         colors={colors}
         onClose={() => setShowLogToday(false)}
-        onSave={async (selections) => {
-          const today = format(new Date(), 'yyyy-MM-dd');
+        onSave={async (selections, date) => {
           const rows = Object.entries(selections)
             .filter(([, t]) => t !== null)
-            .map(([contact_id, type]) => ({ contact_id, date: today, type: type! }));
+            .map(([contact_id, type]) => ({ contact_id, date, type: type! }));
           if (rows.length > 0) {
             await supabase.from('interactions').insert(rows);
             refresh();
@@ -249,22 +251,53 @@ export default function PeopleScreen() {
 
 type LogType = 'hung_out' | 'kept_in_touch';
 
+const CAL_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
 function LogTodayModal({ visible, contacts, colors, onClose, onSave }: {
   visible: boolean;
   contacts: ContactWithMeta[];
   colors: ColorScheme;
   onClose: () => void;
-  onSave: (s: Record<string, LogType | null>) => Promise<void>;
+  onSave: (s: Record<string, LogType | null>, date: string) => Promise<void>;
 }) {
   const styles = React.useMemo(() => makeModalStyles(colors), [colors]);
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const [date, setDate] = useState(todayStr);
+  const [calOpen, setCalOpen] = useState(false);
+  const [viewMonth, setViewMonth] = useState(() => startOfMonth(new Date()));
   const [selections, setSelections] = useState<Record<string, LogType | null>>({});
   const [query, setQuery] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // Reset when modal opens
   React.useEffect(() => {
-    if (visible) { setSelections({}); setQuery(''); }
+    if (visible) {
+      setSelections({});
+      setQuery('');
+      setDate(todayStr);
+      setCalOpen(false);
+      setViewMonth(startOfMonth(new Date()));
+    }
   }, [visible]);
+
+  // Calendar grid
+  const monthStart = startOfMonth(viewMonth);
+  const gridStart  = startOfWeek(monthStart, { weekStartsOn: 0 });
+  const gridEnd    = endOfWeek(endOfMonth(viewMonth), { weekStartsOn: 0 });
+  const weeks: Date[][] = [];
+  let cursor = gridStart;
+  while (cursor <= gridEnd) {
+    const week: Date[] = [];
+    for (let i = 0; i < 7; i++) { week.push(cursor); cursor = addDays(cursor, 1); }
+    weeks.push(week);
+  }
+  const canFwdMonth = !isSameMonth(viewMonth, new Date());
+
+  function friendlyDate(d: string) {
+    const yest = format(addDays(new Date(), -1), 'yyyy-MM-dd');
+    if (d === todayStr) return 'Today';
+    if (d === yest) return 'Yesterday';
+    return format(new Date(d + 'T12:00:00'), 'MMM d, yyyy');
+  }
 
   const filtered = contacts.filter((c) =>
     !query.trim() || c.name.toLowerCase().includes(query.trim().toLowerCase())
@@ -278,7 +311,7 @@ function LogTodayModal({ visible, contacts, colors, onClose, onSave }: {
 
   async function handleSave() {
     setSaving(true);
-    await onSave(selections);
+    await onSave(selections, date);
     setSaving(false);
     onClose();
   }
@@ -287,10 +320,74 @@ function LogTodayModal({ visible, contacts, colors, onClose, onSave }: {
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
-          {/* Handle */}
           <View style={styles.handle} />
+          <Text style={styles.title}>Log interactions</Text>
 
-          <Text style={styles.title}>Log today</Text>
+          {/* Date selector */}
+          <TouchableOpacity
+            style={styles.dateRow}
+            onPress={() => setCalOpen((v) => !v)}
+          >
+            <Text style={styles.dateLabel}>Date</Text>
+            <Text style={styles.dateVal}>{friendlyDate(date)} {calOpen ? '▲' : '▼'}</Text>
+          </TouchableOpacity>
+
+          {/* Inline calendar */}
+          {calOpen && (
+            <View style={styles.calWrap}>
+              <View style={styles.calNav}>
+                <TouchableOpacity onPress={() => setViewMonth(subMonths(viewMonth, 1))} style={styles.calNavBtn}>
+                  <Text style={styles.calNavArrow}>‹</Text>
+                </TouchableOpacity>
+                <Text style={styles.calMonthLabel}>{format(viewMonth, 'MMMM yyyy')}</Text>
+                <TouchableOpacity
+                  onPress={() => { if (canFwdMonth) setViewMonth(addMonths(viewMonth, 1)); }}
+                  disabled={!canFwdMonth}
+                  style={styles.calNavBtn}
+                >
+                  <Text style={[styles.calNavArrow, !canFwdMonth && styles.calNavArrowOff]}>›</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.calDayHdrRow}>
+                {CAL_LABELS.map((d, i) => (
+                  <Text key={i} style={styles.calDayHdr}>{d}</Text>
+                ))}
+              </View>
+              {weeks.map((week, wi) => (
+                <View key={wi} style={styles.calWeek}>
+                  {week.map((day, di) => {
+                    const ds = format(day, 'yyyy-MM-dd');
+                    const inMon = isSameMonth(day, viewMonth);
+                    const isFut = ds > todayStr;
+                    const isSelected = ds === date;
+                    const isToday_ = ds === todayStr;
+                    const disabled = !inMon || isFut;
+                    return (
+                      <TouchableOpacity
+                        key={di}
+                        disabled={disabled}
+                        style={[
+                          styles.calDay,
+                          isSelected && styles.calDaySelected,
+                          isToday_ && !isSelected && styles.calDayToday,
+                          disabled && styles.calDayDisabled,
+                        ]}
+                        onPress={() => { setDate(ds); setCalOpen(false); }}
+                      >
+                        <Text style={[
+                          styles.calDayNum,
+                          isSelected && styles.calDayNumSelected,
+                          disabled && styles.calDayNumDisabled,
+                        ]}>
+                          {inMon ? format(day, 'd') : ''}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              ))}
+            </View>
+          )}
 
           <TextInput
             style={styles.search}
@@ -312,17 +409,13 @@ function LogTodayModal({ visible, contacts, colors, onClose, onSave }: {
                       style={[styles.chip, sel === 'hung_out' && styles.chipGreen]}
                       onPress={() => toggle(c.id, 'hung_out')}
                     >
-                      <Text style={[styles.chipText, sel === 'hung_out' && styles.chipTextGreen]}>
-                        Hung out
-                      </Text>
+                      <Text style={[styles.chipText, sel === 'hung_out' && styles.chipTextGreen]}>Hung out</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.chip, sel === 'kept_in_touch' && styles.chipDark]}
                       onPress={() => toggle(c.id, 'kept_in_touch')}
                     >
-                      <Text style={[styles.chipText, sel === 'kept_in_touch' && styles.chipTextDark]}>
-                        Kept in touch
-                      </Text>
+                      <Text style={[styles.chipText, sel === 'kept_in_touch' && styles.chipTextDark]}>Kept in touch</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -381,6 +474,29 @@ function makeModalStyles(colors: ColorScheme) {
     saveBtnOff:     { backgroundColor: colors.surfaceAlt },
     saveBtnText:    { fontSize: 15, fontWeight: '600', color: colors.background },
     saveBtnTextOff: { color: colors.textTertiary },
+
+    // Date selector
+    dateRow:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.surfaceAlt, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11, marginBottom: 10 },
+    dateLabel: { fontSize: 14, color: colors.textSecondary },
+    dateVal:   { fontSize: 14, fontWeight: '600', color: colors.text },
+
+    // Inline calendar
+    calWrap:        { marginBottom: 10, backgroundColor: colors.surfaceAlt, borderRadius: 12, padding: 10 },
+    calNav:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+    calNavBtn:      { padding: 6 },
+    calNavArrow:    { fontSize: 22, color: colors.text, fontWeight: '300' },
+    calNavArrowOff: { color: colors.textTertiary },
+    calMonthLabel:  { fontSize: 13, fontWeight: '600', color: colors.text },
+    calDayHdrRow:   { flexDirection: 'row', marginBottom: 4 },
+    calDayHdr:      { flex: 1, textAlign: 'center', fontSize: 10, fontWeight: '600', color: colors.textTertiary },
+    calWeek:        { flexDirection: 'row', marginBottom: 3 },
+    calDay:         { flex: 1, height: 34, borderRadius: 8, margin: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
+    calDaySelected: { backgroundColor: colors.text },
+    calDayToday:    { borderWidth: 1.5, borderColor: colors.text },
+    calDayDisabled: { backgroundColor: 'transparent' },
+    calDayNum:      { fontSize: 12, fontWeight: '500', color: colors.text },
+    calDayNumSelected: { color: colors.background, fontWeight: '700' },
+    calDayNumDisabled: { color: colors.textTertiary },
   });
 }
 
